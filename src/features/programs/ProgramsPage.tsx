@@ -103,6 +103,15 @@ export function ProgramsPage({ store }: { store: AppStore }) {
           onChange={chooseFile}
           disabled={reading}
         />
+        <div className="authoring-link-row">
+          <div>
+            <strong>No JSON file yet?</strong>
+            <p className="muted">Use the bundled prompt, schema, example, and your known IDs.</p>
+          </div>
+          <Link className="button button-secondary" to="/author">
+            Open authoring kit
+          </Link>
+        </div>
       </section>
       {errors.length > 0 ? (
         <ErrorPanel

@@ -10,3 +10,5 @@ export function downloadText(content: string, filename: string, type: string): v
   anchor.click();
   URL.revokeObjectURL(url);
 }
+
+export type DownloadText = typeof downloadText;

@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { DataPage } from '../features/data/DataPage';
+import { AuthorPage } from '../features/authoring/AuthorPage';
 import { ExerciseHistoryPage } from '../features/history/ExerciseHistoryPage';
 import { HistoryPage } from '../features/history/HistoryPage';
 import { ProgramDetailPage } from '../features/programs/ProgramDetailPage';
@@ -9,6 +10,7 @@ import { ActiveSessionPage } from '../features/session/ActiveSessionPage';
 import { TodayPage } from '../features/session/TodayPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
 import { downloadText } from '../platform/files/files';
+import { createBrowserClipboardAdapter } from '../platform/clipboard/browserClipboardAdapter';
 import { applyTheme } from '../platform/theme/applyTheme';
 import { Button } from '../ui/atoms/Button';
 import { AppShell } from '../ui/templates/AppShell';
@@ -16,6 +18,7 @@ import { usePersistedStore } from './PersistedProvider';
 
 export function App() {
   const { store, fatal } = usePersistedStore();
+  const clipboard = useMemo(() => createBrowserClipboardAdapter(), []);
   useEffect(() => {
     if (!store) return;
     const theme = store.data.settings.theme;
@@ -55,6 +58,16 @@ export function App() {
     <AppShell>
       <Routes>
         <Route path="/" element={<TodayPage store={store} />} />
+        <Route
+          path="/author"
+          element={
+            <AuthorPage
+              programs={store.data.programs}
+              clipboard={clipboard}
+              download={downloadText}
+            />
+          }
+        />
         <Route path="/programs" element={<ProgramsPage store={store} />} />
         <Route path="/programs/:programId/:version" element={<ProgramDetailPage store={store} />} />
         <Route path="/session/active" element={<ActiveSessionPage store={store} />} />
