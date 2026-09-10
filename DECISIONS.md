@@ -1,9 +1,12 @@
 # Implementation decisions
 
-- **Visual direction:** The specifications define the user and gym context but no brand. The
-  interface uses an industrial field-notebook aesthetic: high contrast, restrained moss and
-  safety-orange accents, large physical controls, and locally bundled typefaces. It is meant to
-  feel calm, durable, and direct under divided attention.
+- **Visual direction — instrumented field notebook:** Fieldwork is calm, durable, and direct under
+  divided attention: high-contrast paper and ink, restrained moss and safety-orange, large physical
+  controls, and locally bundled typefaces. During logging, compact amber prescription strips act as
+  reference while oversized actual-value inputs command the screen. Dashed input borders plus a
+  hollow-circle “Not saved” marker identify unconfirmed data; checkmarked “Saved” rows and
+  exclamation-mark failure panels distinguish outcomes without colour. Decoration stays outside the
+  active logging controls, preserving the phone viewport for the current set.
 - **Leaving a partial session:** The data model has no abandoned status and logged sets may not be
   deleted as a side effect. “Leave session” therefore keeps the session in progress and returns to
   Today, where it can be resumed. This preserves every confirmed set without falsely marking the

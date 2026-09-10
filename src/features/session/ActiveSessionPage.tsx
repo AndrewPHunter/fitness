@@ -85,12 +85,20 @@ function SetLogger({
           {task.entry.targetRpe ? <span>· RPE {task.entry.targetRpe}</span> : null}
         </div>
       </div>
-      <div>
-        <p className="eyebrow">Actual — your set</p>
+      <div className="stack actual-heading">
+        <div className="spread">
+          <p className="eyebrow">Actual — your set</p>
+          <p className="unconfirmed-marker">
+            <span className="state-symbol" aria-hidden="true">
+              ○
+            </span>
+            Not saved
+          </p>
+        </div>
         {prefill && !touched ? (
           <p className="prefill-note">
-            Dashed field is a {historyWeight ? 'last logged' : 'prescribed'} prefill. It is not
-            saved until you press Log set.
+            Dashed weight is a {historyWeight ? 'last logged' : 'prescribed'} prefill. Confirm it
+            with Log set.
           </p>
         ) : null}
       </div>
@@ -159,8 +167,11 @@ function SetLogger({
         </select>
       </div>
       {inputError ? (
-        <p role="alert" className="error-code">
-          {inputError}
+        <p role="alert" className="action-feedback action-feedback-failure">
+          <span className="state-symbol" aria-hidden="true">
+            !
+          </span>
+          Set not saved. {inputError}
         </p>
       ) : null}
       <Button wide onClick={confirm}>
@@ -376,6 +387,12 @@ export function ActiveSessionPage({ store }: { store: AppStore }) {
                   ) : (
                     <div className="logged-row">
                       <div>
+                        <p className="saved-marker">
+                          <span className="state-symbol" aria-hidden="true">
+                            ✓
+                          </span>
+                          Saved
+                        </p>
                         <strong>
                           {
                             program.exercises.find(

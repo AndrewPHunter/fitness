@@ -2,10 +2,11 @@ import { NavLink } from 'react-router-dom';
 
 const links = [
   { to: '/', label: 'Today', glyph: '01', end: true },
-  { to: '/programs', label: 'Programs', glyph: '02', end: false },
-  { to: '/history', label: 'History', glyph: '03', end: false },
-  { to: '/data', label: 'Data', glyph: '04', end: false },
-  { to: '/settings', label: 'Settings', glyph: '05', end: false },
+  { to: '/author', label: 'Author', glyph: '02', end: false },
+  { to: '/programs', label: 'Programs', glyph: '03', end: false },
+  { to: '/history', label: 'History', glyph: '04', end: false },
+  { to: '/data', label: 'Data', glyph: '05', end: false },
+  { to: '/settings', label: 'Settings', glyph: '06', end: false },
 ];
 
 export function BottomNav() {
