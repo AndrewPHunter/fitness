@@ -1,5 +1,9 @@
 # 01 — Product Specification
 
+> **Amended.** [Amendment 001](11-amendment-001-program-authoring.md) adds CORE-14
+> (in-app program authoring) and visual-direction constraints. It post-dates the evaluation
+> recorded in [`evaluation/`](../evaluation/) and does not apply to it.
+
 ## 1.1 The user
 
 A single individual tracking their own resistance-training program. One person, one phone, one
@@ -57,6 +61,7 @@ frictionless to record and to read.
 | CORE-11 | Surface storage failures, including quota exhaustion, visibly |
 | CORE-12 | Edit or delete a logged set after the fact |
 | CORE-13 | Deploy as a static site to GitHub Pages via GitHub Actions |
+| CORE-14 | In-app program authoring: hand the user the prompt, schema and example without leaving the app — see [Amendment 001](11-amendment-001-program-authoring.md) |
 
 ### Extended — bonus, differentiating
 
