@@ -1,5 +1,8 @@
 # 06 — UI & UX
 
+> **Amended.** [Amendment 001](11-amendment-001-program-authoring.md) adds the
+> `#/author` screen (§11.3) and visual-direction constraints (§11.4).
+
 ## 6.1 The governing constraint
 
 The logging path is used **mid-workout**: standing, one hand, phone held close, between sets,
@@ -48,6 +51,7 @@ app does not judge).
 - List of stored programs, grouped by `programId`, showing every stored `version`
 - Which one is active
 - Upload control accepting a `.json` file
+- A link to `#/author` for users who have nothing to upload yet ([Amendment 001](11-amendment-001-program-authoring.md), AUT-1)
 - Activating a program is a plain action; deactivating never touches logged history
 
 **Upload result display — CORE-1.** On failure, render **every** `ValidationError`
@@ -82,6 +86,13 @@ Requirements:
 entry in the group, then set 2 of every entry, and so on. This is the only behavioural
 consequence of superset grouping, and it must be visible in the UI — the grouping is not merely
 a visual label. A superset rendered as sequential independent exercises fails this requirement.
+
+### `#/author` — Authoring
+
+Specified in full by [Amendment 001 §11.3](11-amendment-001-program-authoring.md). Hands the user
+the prompt pack, the JSON Schema and a worked example so a program can be authored with an LLM
+without leaving the app or visiting the repository. The copied prompt carries the user's own
+existing `exerciseId`s (AUT-8).
 
 ### `#/history` — History index
 
