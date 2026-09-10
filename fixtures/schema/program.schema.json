@@ -1,0 +1,215 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://andrewphunter.github.io/fitness/schema/program.schema.json",
+  "title": "Fitness Program",
+  "description": "A descriptive workout program. Structure only: no progression logic, no expressions, nothing the application evaluates. See specs/03-program-schema.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["programId", "version", "name", "exercises", "sessions", "schedule"],
+  "properties": {
+    "programId": { "$ref": "#/$defs/slug" },
+    "version": { "type": "integer", "minimum": 1 },
+    "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "description": { "type": "string", "maxLength": 2000 },
+    "exercises": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 200,
+      "items": { "$ref": "#/$defs/exerciseDefinition" }
+    },
+    "sessions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 60,
+      "items": { "$ref": "#/$defs/session" }
+    },
+    "schedule": { "$ref": "#/$defs/schedule" },
+    "frequencyTargets": {
+      "type": "array",
+      "maxItems": 200,
+      "items": { "$ref": "#/$defs/frequencyTarget" }
+    }
+  },
+
+  "$defs": {
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "Lowercase kebab-case identifier."
+    },
+
+    "exerciseDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["exerciseId", "name"],
+      "properties": {
+        "exerciseId": {
+          "$ref": "#/$defs/slug",
+          "description": "Stable identity ACROSS programs. History is unified by this value. See specs/02-domain-model.md section 2.2."
+        },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "notes": { "type": "string", "maxLength": 2000 }
+      }
+    },
+
+    "load": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "unit"],
+      "properties": {
+        "value": { "type": "number", "exclusiveMinimum": 0, "maximum": 2000 },
+        "unit": { "enum": ["kg", "lb"] }
+      }
+    },
+
+    "exerciseEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["exerciseId", "sets", "reps"],
+      "properties": {
+        "exerciseId": { "$ref": "#/$defs/slug" },
+        "sets": { "type": "integer", "minimum": 1, "maximum": 20 },
+        "reps": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "A fixed number. Rep ranges and AMRAP are out of scope."
+        },
+        "targetWeight": {
+          "$ref": "#/$defs/load",
+          "description": "Display-only authoring intent. Never enforced. See constitution C9."
+        },
+        "targetRpe": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10,
+          "multipleOf": 0.5,
+          "description": "Display-only authoring intent. Never enforced. See constitution C9."
+        },
+        "restSeconds": { "type": "integer", "minimum": 0, "maximum": 600 },
+        "notes": { "type": "string", "maxLength": 2000 }
+      }
+    },
+
+    "block": {
+      "type": "object",
+      "required": ["type"],
+      "properties": { "type": { "enum": ["single", "superset"] } },
+      "description": "Discriminated on `type`. if/then is used rather than oneOf so that a failure inside one branch does not also report the unrelated failure of the other branch. See specs/03-program-schema.md section 3.5.",
+      "allOf": [
+        {
+          "if": { "required": ["type"], "properties": { "type": { "const": "single" } } },
+          "then": {
+            "required": ["entry"],
+            "additionalProperties": false,
+            "properties": {
+              "type": { "const": "single" },
+              "entry": { "$ref": "#/$defs/exerciseEntry" }
+            }
+          }
+        },
+        {
+          "if": { "required": ["type"], "properties": { "type": { "const": "superset" } } },
+          "then": {
+            "required": ["entries"],
+            "additionalProperties": false,
+            "properties": {
+              "type": { "const": "superset" },
+              "entries": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 8,
+                "items": { "$ref": "#/$defs/exerciseEntry" },
+                "description": "Logged round-robin. Supersets do not nest."
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sessionId", "name", "blocks"],
+      "properties": {
+        "sessionId": { "$ref": "#/$defs/slug" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "notes": { "type": "string", "maxLength": 2000 },
+        "blocks": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 40,
+          "items": { "$ref": "#/$defs/block" }
+        }
+      }
+    },
+
+    "schedule": {
+      "type": "object",
+      "required": ["mode"],
+      "properties": { "mode": { "enum": ["rotation", "weekdays"] } },
+      "description": "Discriminated on `mode`. if/then used for the same reason as `block`.",
+      "allOf": [
+        {
+          "if": { "required": ["mode"], "properties": { "mode": { "const": "rotation" } } },
+          "then": {
+            "required": ["sequence"],
+            "additionalProperties": false,
+            "properties": {
+              "mode": { "const": "rotation" },
+              "sequence": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 60,
+                "items": { "$ref": "#/$defs/slug" },
+                "description": "Ordered sessionIds. Repetition expresses frequency. Advances only on session completion."
+              }
+            }
+          }
+        },
+        {
+          "if": { "required": ["mode"], "properties": { "mode": { "const": "weekdays" } } },
+          "then": {
+            "required": ["days"],
+            "additionalProperties": false,
+            "properties": {
+              "mode": { "const": "weekdays" },
+              "days": {
+                "type": "object",
+                "additionalProperties": false,
+                "minProperties": 1,
+                "properties": {
+                  "mon": { "$ref": "#/$defs/slug" },
+                  "tue": { "$ref": "#/$defs/slug" },
+                  "wed": { "$ref": "#/$defs/slug" },
+                  "thu": { "$ref": "#/$defs/slug" },
+                  "fri": { "$ref": "#/$defs/slug" },
+                  "sat": { "$ref": "#/$defs/slug" },
+                  "sun": { "$ref": "#/$defs/slug" }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "frequencyTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["exerciseId", "perWeek"],
+      "properties": {
+        "exerciseId": { "$ref": "#/$defs/slug" },
+        "perWeek": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 14,
+          "description": "Display-only authoring intent. Never enforced, never validated against the sequence. See constitution C9."
+        }
+      }
+    }
+  }
+}

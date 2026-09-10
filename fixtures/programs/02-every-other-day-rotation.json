@@ -1,0 +1,163 @@
+{
+  "programId": "every-other-day-strength",
+  "version": 1,
+  "name": "Every Other Day Strength",
+  "description": "The reference fixture. Trained every other day, which drifts against the calendar. Frequency is expressed STRUCTURALLY: 7 sessions span ~14 days, so an exercise appearing in 6 of 7 sessions occurs ~3x/week and one appearing in 2 of 7 occurs ~1x/week. The application performs no scheduling arithmetic to achieve this.",
+  "exercises": [
+    { "exerciseId": "barbell-back-squat", "name": "Back Squat", "notes": "High bar, belt above 100kg." },
+    { "exerciseId": "barbell-bench-press", "name": "Bench Press" },
+    { "exerciseId": "barbell-overhead-press", "name": "Overhead Press" },
+    { "exerciseId": "barbell-deadlift", "name": "Deadlift", "notes": "Once per week is deliberate. Do not add sessions." },
+    { "exerciseId": "chin-up", "name": "Chin-Up" },
+    { "exerciseId": "dip", "name": "Dip" },
+    { "exerciseId": "barbell-row", "name": "Barbell Row" },
+    { "exerciseId": "face-pull", "name": "Face Pull" },
+    { "exerciseId": "ez-bar-curl", "name": "EZ-Bar Curl" }
+  ],
+  "sessions": [
+    {
+      "sessionId": "a-squat-bench",
+      "name": "A — Squat / Bench",
+      "blocks": [
+        {
+          "type": "single",
+          "entry": {
+            "exerciseId": "barbell-back-squat",
+            "sets": 3, "reps": 5,
+            "targetWeight": { "value": 100, "unit": "kg" },
+            "targetRpe": 8,
+            "restSeconds": 180
+          }
+        },
+        {
+          "type": "single",
+          "entry": {
+            "exerciseId": "barbell-bench-press",
+            "sets": 3, "reps": 5,
+            "targetWeight": { "value": 80, "unit": "kg" },
+            "targetRpe": 8,
+            "restSeconds": 180
+          }
+        },
+        {
+          "type": "superset",
+          "entries": [
+            { "exerciseId": "chin-up", "sets": 3, "reps": 8, "targetRpe": 7 },
+            { "exerciseId": "dip", "sets": 3, "reps": 10, "targetRpe": 7 }
+          ]
+        }
+      ]
+    },
+    {
+      "sessionId": "b-squat-press",
+      "name": "B — Squat / Press",
+      "blocks": [
+        {
+          "type": "single",
+          "entry": {
+            "exerciseId": "barbell-back-squat",
+            "sets": 3, "reps": 5,
+            "targetWeight": { "value": 100, "unit": "kg" },
+            "targetRpe": 8,
+            "restSeconds": 180
+          }
+        },
+        {
+          "type": "single",
+          "entry": {
+            "exerciseId": "barbell-overhead-press",
+            "sets": 3, "reps": 5,
+            "targetWeight": { "value": 50, "unit": "kg" },
+            "targetRpe": 8,
+            "restSeconds": 150
+          }
+        },
+        {
+          "type": "superset",
+          "entries": [
+            { "exerciseId": "barbell-row", "sets": 3, "reps": 8, "targetRpe": 7 },
+            { "exerciseId": "face-pull", "sets": 3, "reps": 15, "targetRpe": 6 }
+          ]
+        }
+      ]
+    },
+    {
+      "sessionId": "c-squat-deadlift",
+      "name": "C — Squat / Deadlift",
+      "notes": "The only heavy pull of the week alongside D.",
+      "blocks": [
+        {
+          "type": "single",
+          "entry": {
+            "exerciseId": "barbell-back-squat",
+            "sets": 2, "reps": 5,
+            "targetWeight": { "value": 90, "unit": "kg" },
+            "targetRpe": 7,
+            "restSeconds": 150
+          }
+        },
+        {
+          "type": "single",
+          "entry": {
+            "exerciseId": "barbell-deadlift",
+            "sets": 1, "reps": 5,
+            "targetWeight": { "value": 140, "unit": "kg" },
+            "targetRpe": 8.5,
+            "restSeconds": 300
+          }
+        },
+        { "type": "single", "entry": { "exerciseId": "chin-up", "sets": 3, "reps": 8 } }
+      ]
+    },
+    {
+      "sessionId": "d-deadlift-bench",
+      "name": "D — Deadlift / Bench",
+      "notes": "No squat. This is the one session in seven that omits it.",
+      "blocks": [
+        {
+          "type": "single",
+          "entry": {
+            "exerciseId": "barbell-deadlift",
+            "sets": 1, "reps": 3,
+            "targetWeight": { "value": 150, "unit": "kg" },
+            "targetRpe": 9,
+            "restSeconds": 300
+          }
+        },
+        {
+          "type": "single",
+          "entry": {
+            "exerciseId": "barbell-bench-press",
+            "sets": 3, "reps": 8,
+            "targetWeight": { "value": 70, "unit": "kg" },
+            "targetRpe": 7,
+            "restSeconds": 150
+          }
+        },
+        {
+          "type": "superset",
+          "entries": [
+            { "exerciseId": "barbell-row", "sets": 3, "reps": 10, "targetRpe": 7 },
+            { "exerciseId": "ez-bar-curl", "sets": 3, "reps": 12, "targetRpe": 7 }
+          ]
+        }
+      ]
+    }
+  ],
+  "schedule": {
+    "mode": "rotation",
+    "sequence": [
+      "a-squat-bench",
+      "b-squat-press",
+      "a-squat-bench",
+      "c-squat-deadlift",
+      "a-squat-bench",
+      "b-squat-press",
+      "d-deadlift-bench"
+    ]
+  },
+  "frequencyTargets": [
+    { "exerciseId": "barbell-back-squat", "perWeek": 3 },
+    { "exerciseId": "barbell-deadlift", "perWeek": 1 }
+  ]
+}

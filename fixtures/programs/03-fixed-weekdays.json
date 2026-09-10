@@ -1,0 +1,41 @@
+{
+  "programId": "classic-mon-wed-fri",
+  "version": 1,
+  "name": "Classic Mon/Wed/Fri",
+  "description": "Weekday-anchored schedule. Exercises the second schedule mode, including rest-day resolution on Tue/Thu/Sat/Sun.",
+  "exercises": [
+    { "exerciseId": "barbell-back-squat", "name": "Squat" },
+    { "exerciseId": "barbell-bench-press", "name": "Bench" },
+    { "exerciseId": "barbell-row", "name": "Row" },
+    { "exerciseId": "barbell-overhead-press", "name": "Press" },
+    { "exerciseId": "barbell-deadlift", "name": "Deadlift" }
+  ],
+  "sessions": [
+    {
+      "sessionId": "workout-a",
+      "name": "Workout A",
+      "blocks": [
+        { "type": "single", "entry": { "exerciseId": "barbell-back-squat", "sets": 5, "reps": 5, "targetWeight": { "value": 225, "unit": "lb" }, "restSeconds": 180 } },
+        { "type": "single", "entry": { "exerciseId": "barbell-bench-press", "sets": 5, "reps": 5, "targetWeight": { "value": 175, "unit": "lb" }, "restSeconds": 180 } },
+        { "type": "single", "entry": { "exerciseId": "barbell-row", "sets": 5, "reps": 5, "targetWeight": { "value": 145, "unit": "lb" }, "restSeconds": 150 } }
+      ]
+    },
+    {
+      "sessionId": "workout-b",
+      "name": "Workout B",
+      "blocks": [
+        { "type": "single", "entry": { "exerciseId": "barbell-back-squat", "sets": 5, "reps": 5, "targetWeight": { "value": 225, "unit": "lb" }, "restSeconds": 180 } },
+        { "type": "single", "entry": { "exerciseId": "barbell-overhead-press", "sets": 5, "reps": 5, "targetWeight": { "value": 105, "unit": "lb" }, "restSeconds": 180 } },
+        { "type": "single", "entry": { "exerciseId": "barbell-deadlift", "sets": 1, "reps": 5, "targetWeight": { "value": 275, "unit": "lb" }, "restSeconds": 300 } }
+      ]
+    }
+  ],
+  "schedule": {
+    "mode": "weekdays",
+    "days": { "mon": "workout-a", "wed": "workout-b", "fri": "workout-a" }
+  },
+  "frequencyTargets": [
+    { "exerciseId": "barbell-back-squat", "perWeek": 3 },
+    { "exerciseId": "barbell-deadlift", "perWeek": 1 }
+  ]
+}

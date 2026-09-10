@@ -1,0 +1,39 @@
+{
+  "programId": "broken-semantic",
+  "version": 1,
+  "name": "Semantically Broken",
+  "description": "DELIBERATELY INVALID. Structurally valid against the JSON Schema, but violates seven referential rules. See fixtures/expected/06-invalid-semantic.expected.md. Exists to prove that structural validation alone is insufficient.",
+  "exercises": [
+    { "exerciseId": "barbell-back-squat", "name": "Back Squat" },
+    { "exerciseId": "barbell-back-squat", "name": "Squat (duplicate id)" },
+    { "exerciseId": "orphan-exercise", "name": "Never Referenced By Any Session" }
+  ],
+  "sessions": [
+    {
+      "sessionId": "session-one",
+      "name": "Session One",
+      "blocks": [
+        { "type": "single", "entry": { "exerciseId": "barbell-back-squat", "sets": 3, "reps": 5 } },
+        { "type": "single", "entry": { "exerciseId": "ghost-exercise", "sets": 3, "reps": 5 } }
+      ]
+    },
+    {
+      "sessionId": "session-one",
+      "name": "Session One Again (duplicate id)",
+      "blocks": [
+        { "type": "single", "entry": { "exerciseId": "barbell-back-squat", "sets": 3, "reps": 5 } }
+      ]
+    },
+    {
+      "sessionId": "unreachable-session",
+      "name": "Never Reached By The Schedule",
+      "blocks": [
+        { "type": "single", "entry": { "exerciseId": "barbell-back-squat", "sets": 3, "reps": 5 } }
+      ]
+    }
+  ],
+  "schedule": { "mode": "rotation", "sequence": ["session-one", "ghost-session"] },
+  "frequencyTargets": [
+    { "exerciseId": "ghost-target-exercise", "perWeek": 3 }
+  ]
+}

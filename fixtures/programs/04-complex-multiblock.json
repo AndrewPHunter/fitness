@@ -1,0 +1,108 @@
+{
+  "programId": "upper-lower-block",
+  "version": 3,
+  "name": "Upper/Lower Volume Block",
+  "description": "Upper end of structural complexity: 6 sessions, a 12-entry rotation with uneven session repetition, 14 exercises, dense superset grouping, mixed units, and entries both with and without targets. Version 3 exists to exercise historical version resolution (CSV-5).",
+  "exercises": [
+    { "exerciseId": "barbell-back-squat", "name": "Back Squat" },
+    { "exerciseId": "barbell-front-squat", "name": "Front Squat" },
+    { "exerciseId": "romanian-deadlift", "name": "Romanian Deadlift" },
+    { "exerciseId": "barbell-deadlift", "name": "Deadlift" },
+    { "exerciseId": "leg-press", "name": "Leg Press" },
+    { "exerciseId": "leg-curl", "name": "Leg Curl" },
+    { "exerciseId": "barbell-bench-press", "name": "Bench Press" },
+    { "exerciseId": "incline-dumbbell-press", "name": "Incline DB Press" },
+    { "exerciseId": "barbell-overhead-press", "name": "Overhead Press" },
+    { "exerciseId": "lateral-raise", "name": "Lateral Raise" },
+    { "exerciseId": "barbell-row", "name": "Barbell Row" },
+    { "exerciseId": "lat-pulldown", "name": "Lat Pulldown" },
+    { "exerciseId": "face-pull", "name": "Face Pull" },
+    { "exerciseId": "ez-bar-curl", "name": "EZ-Bar Curl" }
+  ],
+  "sessions": [
+    {
+      "sessionId": "lower-heavy",
+      "name": "Lower — Heavy",
+      "blocks": [
+        { "type": "single", "entry": { "exerciseId": "barbell-back-squat", "sets": 4, "reps": 4, "targetWeight": { "value": 130, "unit": "kg" }, "targetRpe": 8.5, "restSeconds": 240 } },
+        { "type": "single", "entry": { "exerciseId": "romanian-deadlift", "sets": 3, "reps": 8, "targetWeight": { "value": 100, "unit": "kg" }, "targetRpe": 7.5, "restSeconds": 180 } },
+        { "type": "superset", "entries": [
+          { "exerciseId": "leg-curl", "sets": 3, "reps": 12, "targetRpe": 8 },
+          { "exerciseId": "face-pull", "sets": 3, "reps": 15, "targetRpe": 6 }
+        ] }
+      ]
+    },
+    {
+      "sessionId": "upper-heavy",
+      "name": "Upper — Heavy",
+      "blocks": [
+        { "type": "single", "entry": { "exerciseId": "barbell-bench-press", "sets": 4, "reps": 4, "targetWeight": { "value": 95, "unit": "kg" }, "targetRpe": 8.5, "restSeconds": 240 } },
+        { "type": "superset", "entries": [
+          { "exerciseId": "barbell-row", "sets": 4, "reps": 6, "targetWeight": { "value": 80, "unit": "kg" }, "targetRpe": 8 },
+          { "exerciseId": "lateral-raise", "sets": 4, "reps": 15 }
+        ] },
+        { "type": "single", "entry": { "exerciseId": "ez-bar-curl", "sets": 3, "reps": 10 } }
+      ]
+    },
+    {
+      "sessionId": "lower-volume",
+      "name": "Lower — Volume",
+      "blocks": [
+        { "type": "single", "entry": { "exerciseId": "barbell-front-squat", "sets": 4, "reps": 8, "targetWeight": { "value": 90, "unit": "kg" }, "targetRpe": 7.5, "restSeconds": 180 } },
+        { "type": "superset", "entries": [
+          { "exerciseId": "leg-press", "sets": 3, "reps": 12, "targetWeight": { "value": 400, "unit": "lb" }, "targetRpe": 8 },
+          { "exerciseId": "leg-curl", "sets": 3, "reps": 15, "targetRpe": 8.5 }
+        ] }
+      ]
+    },
+    {
+      "sessionId": "upper-volume",
+      "name": "Upper — Volume",
+      "blocks": [
+        { "type": "single", "entry": { "exerciseId": "incline-dumbbell-press", "sets": 4, "reps": 10, "targetWeight": { "value": 30, "unit": "kg" }, "targetRpe": 8 } },
+        { "type": "superset", "entries": [
+          { "exerciseId": "lat-pulldown", "sets": 4, "reps": 12, "targetRpe": 8 },
+          { "exerciseId": "lateral-raise", "sets": 4, "reps": 20, "targetRpe": 9 },
+          { "exerciseId": "face-pull", "sets": 4, "reps": 20, "targetRpe": 7 }
+        ] },
+        { "type": "single", "entry": { "exerciseId": "ez-bar-curl", "sets": 4, "reps": 12, "targetRpe": 9 } }
+      ]
+    },
+    {
+      "sessionId": "pull-focus",
+      "name": "Pull Focus",
+      "notes": "Appears once per twelve-session cycle.",
+      "blocks": [
+        { "type": "single", "entry": { "exerciseId": "barbell-deadlift", "sets": 3, "reps": 3, "targetWeight": { "value": 180, "unit": "kg" }, "targetRpe": 9, "restSeconds": 300 } },
+        { "type": "superset", "entries": [
+          { "exerciseId": "barbell-row", "sets": 3, "reps": 10, "targetRpe": 8 },
+          { "exerciseId": "lat-pulldown", "sets": 3, "reps": 12, "targetRpe": 8 }
+        ] }
+      ]
+    },
+    {
+      "sessionId": "press-focus",
+      "name": "Press Focus",
+      "blocks": [
+        { "type": "single", "entry": { "exerciseId": "barbell-overhead-press", "sets": 5, "reps": 5, "targetWeight": { "value": 60, "unit": "kg" }, "targetRpe": 8, "restSeconds": 180 } },
+        { "type": "superset", "entries": [
+          { "exerciseId": "incline-dumbbell-press", "sets": 3, "reps": 12 },
+          { "exerciseId": "lateral-raise", "sets": 3, "reps": 15 }
+        ] }
+      ]
+    }
+  ],
+  "schedule": {
+    "mode": "rotation",
+    "sequence": [
+      "lower-heavy", "upper-heavy", "lower-volume", "upper-volume",
+      "lower-heavy", "pull-focus", "lower-volume", "press-focus",
+      "lower-heavy", "upper-heavy", "lower-volume", "upper-volume"
+    ]
+  },
+  "frequencyTargets": [
+    { "exerciseId": "barbell-back-squat", "perWeek": 1.75 },
+    { "exerciseId": "barbell-deadlift", "perWeek": 0.6 },
+    { "exerciseId": "lateral-raise", "perWeek": 2.3 }
+  ]
+}

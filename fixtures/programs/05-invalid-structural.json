@@ -1,0 +1,31 @@
+{
+  "programId": "broken-structural",
+  "version": 0,
+  "name": "Structurally Broken",
+  "description": "DELIBERATELY INVALID. Violates the JSON Schema in eight distinct ways. See fixtures/expected/05-invalid-structural.expected.md. Must be rejected in full, with all eight reported.",
+  "exercises": [
+    { "exerciseId": "barbell-back-squat", "name": "Back Squat" },
+    { "exerciseId": "Bench Press", "name": "Bench Press" },
+    { "exerciseId": "chin-up", "name": "Chin-Up", "muscleGroup": "back" }
+  ],
+  "sessions": [
+    {
+      "sessionId": "session-one",
+      "name": "Session One",
+      "blocks": [
+        { "type": "single", "entry": { "exerciseId": "barbell-back-squat", "sets": 0, "reps": 5 } },
+        { "type": "single", "entry": { "exerciseId": "barbell-back-squat", "sets": 3, "reps": 5, "targetRpe": 12 } },
+        { "type": "single", "entry": { "exerciseId": "chin-up", "sets": 3 } },
+        { "type": "superset", "entries": [ { "exerciseId": "chin-up", "sets": 3, "reps": 8 } ] }
+      ]
+    },
+    {
+      "sessionId": "session-two",
+      "name": "Session Two",
+      "blocks": [
+        { "type": "single", "entry": { "exerciseId": "barbell-back-squat", "sets": 3, "reps": 5, "tempo": "3-1-1-0" } }
+      ]
+    }
+  ],
+  "schedule": { "mode": "rotation", "sequence": ["session-one", "session-two"] }
+}

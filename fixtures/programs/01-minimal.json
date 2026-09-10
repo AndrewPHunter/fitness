@@ -1,0 +1,21 @@
+{
+  "programId": "minimal-full-body",
+  "version": 1,
+  "name": "Minimal Full Body",
+  "description": "Smallest coherent program. One session, two exercises, rotation of length one. Baseline sanity fixture.",
+  "exercises": [
+    { "exerciseId": "barbell-back-squat", "name": "Back Squat" },
+    { "exerciseId": "barbell-bench-press", "name": "Bench Press" }
+  ],
+  "sessions": [
+    {
+      "sessionId": "full-body",
+      "name": "Full Body",
+      "blocks": [
+        { "type": "single", "entry": { "exerciseId": "barbell-back-squat", "sets": 3, "reps": 5 } },
+        { "type": "single", "entry": { "exerciseId": "barbell-bench-press", "sets": 3, "reps": 5 } }
+      ]
+    }
+  ],
+  "schedule": { "mode": "rotation", "sequence": ["full-body"] }
+}
