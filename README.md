@@ -1,57 +1,39 @@
-# Fitness Program Tracker — Specification & Evaluation Harness
+# Fieldwork Fitness Tracker
 
-This repository contains **specifications only**. It deliberately contains **no implementation
-code, no scaffolding, no `package.json`, and no dependency manifests.**
+Fieldwork is a private, static strength-program tracker built for one-handed use during training.
+It validates externally authored JSON programs, logs actual weight/reps/RPE to browser
+`localStorage`, keeps history bound to exact program versions, and exports lossless backups.
 
-## Purpose
+Live app: <https://andrewphunter.github.io/fitness/>
 
-Two things live here:
+## Local development
 
-1. **A complete, self-contained product specification** for a personal fitness-program
-   tracking application — a static React site, hosted on GitHub Pages, storing all data in
-   browser `localStorage`.
-2. **An evaluation harness** — fixed input fixtures and an objective scoring rubric — used to
-   assess how well a coding agent can implement that specification in a single pass.
+Requires Node 22.19.0.
 
-The second purpose constrains the first. Because this specification is a **control artifact**
-for an evaluation, it is written to be:
+```sh
+npm ci
+npm run dev
+```
 
-- **Objectively gradeable.** Requirements are stated as checkable acceptance criteria, not as
-  adjectives. "Good UX" is not a requirement; "the rest timer survives a page reload" is.
-- **Fixed-input.** Every implementation under test receives the identical program fixtures in
-  `fixtures/programs/`.
-- **Tiered.** [Core](specs/10-acceptance-criteria.md) requirements are graded and must pass.
-  Extended requirements are bonus and differentiate strong implementations from adequate ones.
-- **Self-contained.** No tribal knowledge. If it is not written here, it is not required.
+## Verification
 
-## Reading order
+```sh
+npm run typecheck
+npm run lint
+npm run format
+npm run test:utc
+npm run test:phoenix
+npm run build
+npx playwright install chromium
+npm run test:e2e
+```
 
-| Document | Contents |
-|---|---|
-| [`specs/00-constitution.md`](specs/00-constitution.md) | **Read first.** Non-negotiable engineering constraints. Takes precedence over every other document. |
-| [`specs/01-product-spec.md`](specs/01-product-spec.md) | Scope, user, Core vs Extended tiers, explicit non-goals |
-| [`specs/02-domain-model.md`](specs/02-domain-model.md) | Entities, relationships, identity and lifecycle rules |
-| [`specs/03-program-schema.md`](specs/03-program-schema.md) | The program JSON contract and its two-layer validation model |
-| [`specs/04-architecture.md`](specs/04-architecture.md) | Module boundaries, atomic design system, feature slices, state |
-| [`specs/05-persistence.md`](specs/05-persistence.md) | `localStorage` contract, versioning, migration, quota and eviction |
-| [`specs/06-ui-ux.md`](specs/06-ui-ux.md) | Screens, flows, and the mid-workout mobile constraints |
-| [`specs/07-export-import.md`](specs/07-export-import.md) | Export formats and the lossless round-trip guarantee |
-| [`specs/08-quality-standards.md`](specs/08-quality-standards.md) | TypeScript, linting, testing strategy, CI, determinism |
-| [`specs/09-deployment.md`](specs/09-deployment.md) | GitHub Pages, Actions workflow, base path, routing |
-| [`specs/10-acceptance-criteria.md`](specs/10-acceptance-criteria.md) | The graded checklist and scoring rubric |
+The production build uses the GitHub Pages project base `/fitness/` and hash routes, so deep links
+work without server rewrites. The app makes no runtime requests beyond its own same-origin static
+assets. There is no backend, account, analytics, CDN, or remote font request.
 
-## Fixtures
+## Data safety
 
-| Path | Purpose |
-|---|---|
-| `fixtures/schema/program.schema.json` | The published JSON Schema for program files |
-| `fixtures/programs/*.json` | Fixed test inputs, including one **deliberately invalid** file |
-| `fixtures/expected/*.md` | Required validation output for the invalid fixture |
-| `fixtures/authoring-prompt.md` | The prompt pack used to have an LLM author new programs |
-| `fixtures/README.md` | What each fixture is for |
-
-## The one-sentence summary
-
-A phone-first web app that reads an LLM-authored JSON workout program, tells you what to do
-next, records the weight, reps and RPE you actually achieved, and lets you export the results —
-storing everything locally, and never pretending anything works when it does not.
+All data lives in the single versioned `fitness.v1.root` localStorage entry. Browser storage can be
+evicted; use the in-app JSON export regularly. CSV export is for analysis and is not a restorable
+backup.
