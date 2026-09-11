@@ -1,6 +1,9 @@
 # 01 — Product Specification
 
-> **Amended.** [Amendment 001](11-amendment-001-program-authoring.md) adds CORE-14
+> **Amended.** [Amendment 002](12-amendment-002-paste-import.md) adds CORE-15 (paste-to-import)
+> and repairs the band table.
+>
+> [Amendment 001](11-amendment-001-program-authoring.md) adds CORE-14
 > (in-app program authoring) and visual-direction constraints. It post-dates the evaluation
 > recorded in [`evaluation/`](../evaluation/) and does not apply to it.
 
@@ -62,6 +65,7 @@ frictionless to record and to read.
 | CORE-12 | Edit or delete a logged set after the fact |
 | CORE-13 | Deploy as a static site to GitHub Pages via GitHub Actions |
 | CORE-14 | In-app program authoring: hand the user the prompt, schema and example without leaving the app — see [Amendment 001](11-amendment-001-program-authoring.md) |
+| CORE-15 | Import a program by pasting its JSON, with no file written to the device — see [Amendment 002](12-amendment-002-paste-import.md) |
 
 ### Extended — bonus, differentiating
 

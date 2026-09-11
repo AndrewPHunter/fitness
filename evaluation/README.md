@@ -15,9 +15,13 @@ do **not** apply retroactively to earlier runs.
 
 ## Results
 
-| Date       | Model       | Spec baseline | Gates | Core   | Ext  | Final  | Band   |
-| ---------- | ----------- | ------------- | ----- | ------ | ---- | ------ | ------ |
-| 2026-09-10 | GPT-6 Astra | `a7bd40c`     | 7/7   | 99/100 | 0/30 | **99** | Strong |
+Cold one-shots and iterations measure different things and are tracked separately in
+[`iterations.md`](iterations.md). They are never averaged.
+
+| #   | Date       | Model       | Type          | Baseline  | Gates   | Core    | Ext  | Final   | Band             |
+| --- | ---------- | ----------- | ------------- | --------- | ------- | ------- | ---- | ------- | ---------------- |
+| 1   | 2026-09-10 | GPT-6 Astra | Cold one-shot | `a7bd40c` | 7/7     | 99/100  | 0/30 | **99**  | Strong           |
+| 2   | 2026-09-10 | GPT-6 Astra | Iteration     | `1d58f54` | G8 pass | 110/110 | 0/30 | **110** | Complete [^band] |
 
 ## Method
 
@@ -37,3 +41,5 @@ Each record states explicitly what was and was not independently verified.
    log it — a scored result with interventions is still useful, it is simply a different
    measurement.
 5. Grade by execution and record the result here.
+
+[^band]: Originally recorded as "Core ceiling" because the band table had no label for 100% Core with no Extended work. Repaired in [Amendment 002 §12.6](../specs/12-amendment-002-paste-import.md). The score is unchanged.

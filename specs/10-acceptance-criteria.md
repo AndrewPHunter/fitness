@@ -173,6 +173,10 @@ disqualifying in kind.
 
 ## 10.6 Verdict
 
+> **Superseded.** The band table below has a gap at 100% Core with no Extended
+> work. Repaired in [Amendment 002 §12.6](12-amendment-002-paste-import.md), which adds the
+> **Complete** band. Use the repaired table.
+
 ```
 Final = Core (max 100) − Deductions + Extended (max 30)
 ```
