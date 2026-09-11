@@ -77,8 +77,12 @@ H4 goes to 4/4, taking Core to its ceiling.
 defines **Strong** as 85–99% and **Exceptional** as _"100%, plus meaningful Extended work"_ — so a
 perfect Core score with no Extended features falls in a gap between the two bands.
 
-Recorded here as **Core ceiling**. The band table should be repaired in a future amendment; it is
-my defect, and it is noted rather than silently resolved in the implementation's favour.
+Recorded here as **Core ceiling**. It is my defect, noted rather than silently resolved in the
+implementation's favour.
+
+**Subsequently repaired** by [Amendment 002 §12.6](../specs/12-amendment-002-paste-import.md),
+which adds a **Complete** band for exactly this outcome. This result is relabelled Complete. The
+score is unchanged.
 
 ## What was NOT independently verified
 

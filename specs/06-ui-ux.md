@@ -1,6 +1,9 @@
 # 06 — UI & UX
 
-> **Amended.** [Amendment 001](11-amendment-001-program-authoring.md) adds the
+> **Amended.** [Amendment 002](12-amendment-002-paste-import.md) makes pasted JSON the primary
+> import affordance on `#/programs` (§12.3).
+>
+> [Amendment 001](11-amendment-001-program-authoring.md) adds the
 > `#/author` screen (§11.3) and visual-direction constraints (§11.4).
 
 ## 6.1 The governing constraint
@@ -50,7 +53,8 @@ app does not judge).
 
 - List of stored programs, grouped by `programId`, showing every stored `version`
 - Which one is active
-- Upload control accepting a `.json` file
+- **Paste field for program JSON — the primary import affordance** ([Amendment 002](12-amendment-002-paste-import.md), PAS-1)
+- Upload control accepting a `.json` file, retained as secondary (PAS-2)
 - A link to `#/author` for users who have nothing to upload yet ([Amendment 001](11-amendment-001-program-authoring.md), AUT-1)
 - Activating a program is a plain action; deactivating never touches logged history
 
