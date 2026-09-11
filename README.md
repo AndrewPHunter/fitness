@@ -32,9 +32,14 @@ The two purposes pull in different directions and that is managed deliberately:
 
 ### Results so far
 
-| Date       | Model       | Baseline  | Gates | Core   | Ext  | Final  | Band   |
-| ---------- | ----------- | --------- | ----- | ------ | ---- | ------ | ------ |
-| 2026-09-10 | GPT-6 Astra | `a7bd40c` | 7/7   | 99/100 | 0/30 | **99** | Strong |
+Cold one-shots and iterations measure different things and are never averaged — see
+[`evaluation/iterations.md`](evaluation/iterations.md).
+
+| #   | Date       | Model       | Type          | Baseline  | Gates   | Core    | Ext  | Final   | Band     |
+| --- | ---------- | ----------- | ------------- | --------- | ------- | ------- | ---- | ------- | -------- |
+| 1   | 2026-09-10 | GPT-6 Astra | Cold one-shot | `a7bd40c` | 7/7     | 99/100  | 0/30 | **99**  | Strong   |
+| 2   | 2026-09-10 | GPT-6 Astra | Iteration     | `1d58f54` | G8 pass | 110/110 | 0/30 | **110** | Complete |
+| 3   | 2026-09-11 | GPT-6 Astra | Iteration     | `f184055` | G9 pass | 118/118 | 0/30 | **118** | Complete |
 
 ## Local development
 

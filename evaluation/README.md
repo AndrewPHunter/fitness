@@ -22,6 +22,7 @@ Cold one-shots and iterations measure different things and are tracked separatel
 | --- | ---------- | ----------- | ------------- | --------- | ------- | ------- | ---- | ------- | ---------------- |
 | 1   | 2026-09-10 | GPT-6 Astra | Cold one-shot | `a7bd40c` | 7/7     | 99/100  | 0/30 | **99**  | Strong           |
 | 2   | 2026-09-10 | GPT-6 Astra | Iteration     | `1d58f54` | G8 pass | 110/110 | 0/30 | **110** | Complete [^band] |
+| 3   | 2026-09-11 | GPT-6 Astra | Iteration     | `f184055` | G9 pass | 118/118 | 0/30 | **118** | Complete [^k5]   |
 
 ## Method
 
@@ -43,3 +44,5 @@ Each record states explicitly what was and was not independently verified.
 5. Grade by execution and record the result here.
 
 [^band]: Originally recorded as "Core ceiling" because the band table had no label for 100% Core with no Extended work. Repaired in [Amendment 002 §12.6](../specs/12-amendment-002-paste-import.md). The score is unchanged.
+
+[^k5]: 117/118 (99%, Strong) under a stricter reading of PAS-5 — see the [iteration 3 record](2026-09-11-gpt-6-astra-iteration-3.md#caveat--prose-around-a-fence).

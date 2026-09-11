@@ -14,13 +14,13 @@ also why the two are tracked in separate columns and never averaged.
 
 ## Log
 
-| #   | Date       | Model       | Type          | Spec baseline    | Brief              | Gates   | Core    | Ext  | Final | Band             |
-| --- | ---------- | ----------- | ------------- | ---------------- | ------------------ | ------- | ------- | ---- | ----- | ---------------- |
-| 1   | 2026-09-10 | GPT-6 Astra | Cold one-shot | `a7bd40c`        | Full specification | 7/7     | 99/100  | 0/30 | 99    | Strong           |
-| 2   | 2026-09-10 | GPT-6 Astra | Iteration     | `1d58f54`        | Amendment 001      | G8 pass | 110/110 | 0/30 | 110   | Complete [^band] |
-| 3   | —          | GPT-6 Astra | Iteration     | `main` @ handoff | Amendment 002      | —       | —       | —    | —     | —                |
+| #   | Date       | Model       | Type          | Spec baseline | Brief              | Gates   | Core    | Ext  | Final | Band             |
+| --- | ---------- | ----------- | ------------- | ------------- | ------------------ | ------- | ------- | ---- | ----- | ---------------- |
+| 1   | 2026-09-10 | GPT-6 Astra | Cold one-shot | `a7bd40c`     | Full specification | 7/7     | 99/100  | 0/30 | 99    | Strong           |
+| 2   | 2026-09-10 | GPT-6 Astra | Iteration     | `1d58f54`     | Amendment 001      | G8 pass | 110/110 | 0/30 | 110   | Complete [^band] |
+| 3   | 2026-09-11 | GPT-6 Astra | Iteration     | `f184055`     | Amendment 002      | G9 pass | 118/118 | 0/30 | 118   | Complete [^k5]   |
 
-Records: [round 1](2026-09-10-gpt-6-astra.md) · [iteration 2](2026-09-10-gpt-6-astra-iteration-2.md)
+Records: [round 1](2026-09-10-gpt-6-astra.md) · [iteration 2](2026-09-10-gpt-6-astra-iteration-2.md) · [iteration 3](2026-09-11-gpt-6-astra-iteration-3.md)
 
 ## Rules for an iteration
 
@@ -52,3 +52,5 @@ Add a row above, and a full record at `evaluation/<date>-<model>-iteration-<n>.m
 shape of the round-1 record — including its **"what was not independently verified"** section.
 
 [^band]: Originally recorded as "Core ceiling" because the band table had no label for 100% Core with no Extended work. Repaired in [Amendment 002 §12.6](../specs/12-amendment-002-paste-import.md). The score is unchanged.
+
+[^k5]: 117/118 (99%, Strong) under a stricter reading of PAS-5 — see the [iteration 3 record](2026-09-11-gpt-6-astra-iteration-3.md#caveat--prose-around-a-fence).
