@@ -343,6 +343,47 @@ p {
   display: grid;
   gap: var(--space-md);
 }
+.paste-import-primary {
+  background: var(--ink);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-lg);
+  color: var(--paper);
+  padding: var(--space-lg);
+}
+.paste-import-primary .eyebrow,
+.paste-import-primary .field-hint {
+  color: color-mix(in oklch, var(--paper), transparent 20%);
+}
+.paste-import-primary .button-primary {
+  background: var(--orange);
+  color: oklch(0.18 0.01 50);
+  min-height: 3.4rem;
+}
+.program-paste-input {
+  background: var(--paper);
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.45;
+  min-height: 15rem;
+  padding: var(--space-md);
+  resize: vertical;
+  width: 100%;
+}
+.program-paste-input:focus-visible {
+  border-color: var(--orange);
+}
+.import-step {
+  color: var(--orange);
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 820;
+}
+.file-import-secondary {
+  background: var(--surface-raised);
+}
 .authoring-link-row {
   align-items: center;
   border-top: 1px solid var(--line);
