@@ -76,6 +76,11 @@ it('copies the complete fixture prompt with the visible local index injected', a
   expect(copied).toContain('- `barbell-bench-press`');
   expect(copied).toContain('- `user-special-row`');
   expect(screen.getByText('Copied the complete personalized prompt.')).toBeVisible();
+  expect(screen.getByRole('link', { name: 'Paste it directly into Programs' })).toHaveAttribute(
+    'href',
+    '/programs?paste=1',
+  );
+  expect(screen.queryByText(/save the LLM’s JSON-only reply/u)).not.toBeInTheDocument();
 });
 
 it('shows clipboard failure while keeping the full selectable fallback present', async () => {

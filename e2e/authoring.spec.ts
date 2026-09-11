@@ -33,11 +33,13 @@ test('authoring kit copies personalized fixture content and downloads uploadable
   );
   await page.getByRole('button', { name: 'Copy personalized prompt' }).click();
   await expect(page.getByText('Copied the complete personalized prompt.')).toBeVisible();
-  const copied = await page.evaluate(() => globalThis.navigator.clipboard.readText());
-  expect(copied).toContain('# Program Authoring Prompt Pack');
-  expect(copied).toContain("## Existing exercise IDs from this user's tracker — reuse these first");
-  expect(copied).toContain('- `barbell-back-squat`');
-  expect(copied).toContain('## Self-check before output');
+  const fallback = await page.getByLabel('Full personalized authoring prompt').inputValue();
+  expect(fallback).toContain('# Program Authoring Prompt Pack');
+  expect(fallback).toContain(
+    "## Existing exercise IDs from this user's tracker — reuse these first",
+  );
+  expect(fallback).toContain('- `barbell-back-squat`');
+  expect(fallback).toContain('## Self-check before output');
 
   const schemaDownloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Download schema' }).click();
@@ -57,7 +59,7 @@ test('authoring kit copies personalized fixture content and downloads uploadable
     await readFile(path.resolve('fixtures/programs/02-every-other-day-rotation.json'), 'utf8'),
   );
 
-  await page.getByRole('link', { name: 'I have a JSON file — go to upload' }).click();
+  await page.getByRole('link', { name: 'I have JSON — paste it into Programs' }).click();
   await page.locator('#program-file').setInputFiles(examplePath);
   await expect(page.getByText('Ready to import')).toBeVisible();
   await expect(page.getByRole('heading', { name: /Every Other Day Strength/u })).toBeVisible();

@@ -137,11 +137,10 @@ export function AuthorPage({
           <li>Copy the prompt above.</li>
           <li>Paste it into any capable LLM.</li>
           <li>Describe the program you want in the same message.</li>
+          <li>Copy the LLM’s JSON-only reply—do not save a file or include code fences.</li>
           <li>
-            Save the LLM’s JSON-only reply as a <code>.json</code> file.
-          </li>
-          <li>
-            Return to <Link to="/programs">Programs</Link> and upload the file for validation.
+            <Link to="/programs?paste=1">Paste it directly into Programs</Link>, validate, and
+            import.
           </li>
         </ol>
         <p className="muted">Fieldwork calls no LLM and sends no data anywhere.</p>
@@ -248,8 +247,8 @@ export function AuthorPage({
         />
       </section>
 
-      <Link className="button button-primary" to="/programs">
-        I have a JSON file — go to upload
+      <Link className="button button-primary" to="/programs?paste=1">
+        I have JSON — paste it into Programs
       </Link>
     </main>
   );
