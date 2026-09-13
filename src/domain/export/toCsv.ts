@@ -1,3 +1,4 @@
+import { entrySetCount, prescriptionAt } from '../program/prescription';
 import type { ExerciseEntry, PersistedRoot } from '../program/types';
 
 export const CSV_COLUMNS = [
@@ -16,6 +17,7 @@ export const CSV_COLUMNS = [
   'set_index',
   'prescribed_sets',
   'prescribed_reps',
+  'prescribed_reps_max',
   'target_weight_value',
   'target_weight_unit',
   'target_rpe',
@@ -81,6 +83,11 @@ export function toCsv(root: PersistedRoot): string {
         throw new Error(
           `Cannot export set ${setLog.setLogId}: its historical prescription is missing.`,
         );
+      const prescription = prescriptionAt(resolved.entry, setLog.setIndex);
+      if (!prescription)
+        throw new Error(
+          `Cannot export set ${setLog.setLogId}: its per-set historical prescription is missing.`,
+        );
       const values: Array<string | number> = [
         sessionLog.sessionLogId,
         sessionLog.programId,
@@ -95,11 +102,12 @@ export function toCsv(root: PersistedRoot): string {
         resolved.blockType,
         setLog.entryIndex,
         setLog.setIndex,
-        resolved.entry.sets,
-        resolved.entry.reps,
-        resolved.entry.targetWeight?.value ?? '',
-        resolved.entry.targetWeight?.unit ?? '',
-        resolved.entry.targetRpe ?? '',
+        entrySetCount(resolved.entry),
+        prescription.reps,
+        prescription.repsMax ?? '',
+        prescription.targetWeight?.value ?? '',
+        prescription.targetWeight?.unit ?? '',
+        prescription.targetRpe ?? '',
         setLog.weight.value,
         setLog.weight.unit,
         setLog.reps,

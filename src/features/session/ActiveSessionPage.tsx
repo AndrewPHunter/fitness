@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { allSetLogs, lastLoggedWeight, prefillWeight } from '../../domain/history/history';
+import { entrySetCount, isPerSetEntry, prescribedReps } from '../../domain/program/prescription';
 import type { Load, SetLog } from '../../domain/program/types';
 import { plannedSetKey, plannedSets, type PlannedSet } from '../../domain/session/plannedSets';
 import type { AppStore } from '../../domain/state/appStore';
@@ -31,11 +32,11 @@ function SetLogger({
   const prefill = prefillWeight(
     allSetLogs(store.data.sessionLogs),
     task.entry.exerciseId,
-    task.entry.targetWeight,
+    task.prescription.targetWeight,
   );
   const [weight, setWeight] = useState(prefill ? String(prefill.value) : '');
   const [unit, setUnit] = useState<Load['unit']>(prefill?.unit ?? store.data.settings.defaultUnit);
-  const [reps, setReps] = useState(String(task.entry.reps));
+  const [reps, setReps] = useState(String(task.prescription.reps));
   const [rpe, setRpe] = useState('');
   const [touched, setTouched] = useState(false);
   const [inputError, setInputError] = useState('');
@@ -73,17 +74,32 @@ function SetLogger({
               : `Block ${task.blockIndex + 1}`}
           </p>
           <h2>{exerciseName}</h2>
+          {isPerSetEntry(task.entry) && task.entry.notes ? (
+            <p className="muted">{task.entry.notes}</p>
+          ) : null}
         </div>
       </div>
       <div className="prescribed-band">
         <p className="eyebrow">Prescribed — reference only</p>
         <div className="cluster">
           <strong>
-            {task.entry.sets} sets × {task.entry.reps} reps
+            {isPerSetEntry(task.entry)
+              ? `Set ${task.setIndex + 1} of ${entrySetCount(task.entry)} · ${prescribedReps(task.prescription)} reps`
+              : `${task.entry.sets} sets × ${prescribedReps(task.prescription)} reps`}
           </strong>
-          {task.entry.targetWeight ? <span>· {formatLoad(task.entry.targetWeight)}</span> : null}
-          {task.entry.targetRpe ? <span>· RPE {task.entry.targetRpe}</span> : null}
+          {task.prescription.targetWeight ? (
+            <span>· {formatLoad(task.prescription.targetWeight)}</span>
+          ) : null}
+          {task.prescription.targetRpe !== undefined ? (
+            <span>· RPE {task.prescription.targetRpe}</span>
+          ) : null}
+          {isPerSetEntry(task.entry) && task.prescription.restSeconds !== undefined ? (
+            <span>· Rest {task.prescription.restSeconds}s</span>
+          ) : null}
         </div>
+        {isPerSetEntry(task.entry) && task.prescription.notes ? (
+          <p>{task.prescription.notes}</p>
+        ) : null}
       </div>
       <div className="stack actual-heading">
         <div className="spread">
