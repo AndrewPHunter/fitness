@@ -24,6 +24,7 @@ Cold one-shots and iterations measure different things and are tracked separatel
 | 2   | 2026-09-10 | GPT-6 Astra | Iteration     | `1d58f54` | G8 pass  | 110/110 | 0/30 | **110** | Complete [^band] |
 | 3   | 2026-09-11 | GPT-6 Astra | Iteration     | `f184055` | G9 pass  | 118/118 | 0/30 | **118** | Complete [^k5]   |
 | 4   | 2026-09-13 | GPT-6 Astra | Iteration     | `5777539` | G10 pass | 134/134 | 0/26 | **134** | Complete         |
+| 5   | 2026-09-13 | GPT-6 Astra | Iteration     | `7523d87` | G12 pass | 150/150 | 0/26 | **150** | Complete         |
 
 ## Method
 
