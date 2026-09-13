@@ -18,11 +18,12 @@ do **not** apply retroactively to earlier runs.
 Cold one-shots and iterations measure different things and are tracked separately in
 [`iterations.md`](iterations.md). They are never averaged.
 
-| #   | Date       | Model       | Type          | Baseline  | Gates   | Core    | Ext  | Final   | Band             |
-| --- | ---------- | ----------- | ------------- | --------- | ------- | ------- | ---- | ------- | ---------------- |
-| 1   | 2026-09-10 | GPT-6 Astra | Cold one-shot | `a7bd40c` | 7/7     | 99/100  | 0/30 | **99**  | Strong           |
-| 2   | 2026-09-10 | GPT-6 Astra | Iteration     | `1d58f54` | G8 pass | 110/110 | 0/30 | **110** | Complete [^band] |
-| 3   | 2026-09-11 | GPT-6 Astra | Iteration     | `f184055` | G9 pass | 118/118 | 0/30 | **118** | Complete [^k5]   |
+| #   | Date       | Model       | Type          | Baseline  | Gates    | Core    | Ext  | Final   | Band             |
+| --- | ---------- | ----------- | ------------- | --------- | -------- | ------- | ---- | ------- | ---------------- |
+| 1   | 2026-09-10 | GPT-6 Astra | Cold one-shot | `a7bd40c` | 7/7      | 99/100  | 0/30 | **99**  | Strong           |
+| 2   | 2026-09-10 | GPT-6 Astra | Iteration     | `1d58f54` | G8 pass  | 110/110 | 0/30 | **110** | Complete [^band] |
+| 3   | 2026-09-11 | GPT-6 Astra | Iteration     | `f184055` | G9 pass  | 118/118 | 0/30 | **118** | Complete [^k5]   |
+| 4   | 2026-09-13 | GPT-6 Astra | Iteration     | `5777539` | G10 pass | 134/134 | 0/26 | **134** | Complete         |
 
 ## Method
 
