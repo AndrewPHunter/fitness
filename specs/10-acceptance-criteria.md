@@ -133,6 +133,10 @@ All seven must pass. Any failure is a **FAIL** regardless of everything else.
 
 ## 10.4 Extended criteria — up to 30 bonus points
 
+> **Amended.** [Amendment 003](13-amendment-003-pwa-and-palette.md) promotes EXT-7 into
+> Core as CORE-16. The Extended maximum is **26** from baseline `<amendment 003 merge>`
+> onward. Rounds 1-3 scored 0 here and are unaffected.
+
 Bonus only. Zero here with a strong Core score is a good outcome.
 
 | ID | Capability | Pts |
@@ -143,7 +147,7 @@ Bonus only. Zero here with a strong Core score is a good outcome.
 | EXT-4 | Personal-record detection | 3 |
 | EXT-5 | Per-exercise progress charts | 3 |
 | EXT-6 | Exercise aliasing across `exerciseId`s | 4 |
-| EXT-7 | Installable PWA with offline app shell | 4 |
+| ~~EXT-7~~ | ~~Installable PWA with offline app shell~~ — **promoted to CORE-16** by [Amendment 003](13-amendment-003-pwa-and-palette.md). Extended max is now **26** | — |
 | EXT-8 | Screen wake lock during a session | 2 |
 | EXT-9 | Backup staleness indicator from a real recorded timestamp | 2 |
 | EXT-10 | Full mid-session position resume | 4 |

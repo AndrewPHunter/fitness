@@ -149,3 +149,70 @@ A working, deployed application with CI green, in which a program can be
 authored and imported without any file being written to the device. That is
 gate G9, and it is the entire point of this round.
 ````
+
+### Iteration 4 — GPT-6 Astra — Amendment 003
+
+```
+Continue work on the repository you previously implemented:
+https://github.com/AndrewPHunter/fitness
+
+This is ITERATION 4. It is not a fresh build. Your previous three rounds are on
+`main`. Round 1 scored 99/100; iterations 2 and 3 both reached Core ceiling with
+no regression.
+
+READ FIRST, IN THIS ORDER
+1. `specs/13-amendment-003-pwa-and-palette.md` — the brief for this round.
+2. `evaluation/2026-09-11-gpt-6-astra-iteration-3.md` — how your last round was
+   graded.
+3. `evaluation/iterations.md` — the rules this round is scored under.
+4. `specs/00-constitution.md` — unchanged, and still takes precedence over every
+   other document including this prompt.
+
+TASK
+Implement Amendment 003, and nothing else. It has two parts:
+
+Part A — CORE-16, installable PWA (PWA-1..PWA-9). This is promoted from the
+Extended tier because it is the real mitigation for Hazard A in specs/05:
+iOS evicting localStorage. Prose asking the user to install is not the
+mitigation; being installable is.
+
+Part B — VIS-6..VIS-10, the colour scheme. The palette is specified exactly,
+with measured contrast ratios. Implement those values; do not substitute your
+own.
+
+Three requirements are traps, and all three are about honesty:
+
+- PWA-8. A precached shell can serve an old build after a deploy. Surface a
+  waiting worker as an explicit user-actioned update. No skipWaiting, no
+  automatic reload, and never update while a session is in progress.
+- PWA-9. iOS Safari does not fire beforeinstallprompt, and iOS is the target
+  platform. Render a one-tap install button ONLY where that event actually
+  fired; otherwise show the real Share -> Add to Home Screen instructions. An
+  install button that does nothing on the user's platform is an automatic zero
+  for Section L.
+- VIS-10. Contrast must be computed in CI from the token values themselves. A
+  snapshot, or a hardcoded list of expected numbers, does not satisfy this.
+
+RULES
+1. Do not modify `specs/`, `fixtures/`, or `evaluation/`.
+2. No regression across all three previous rounds. Every criterion that passed
+   must still pass, including the two invalid fixtures producing exactly 8 and 7
+   errors while writing nothing, the authoring kit injecting the user's own
+   exercise IDs, and paste/upload sharing one validation path.
+3. VIS-3 still holds under the new palette: confirmed, unconfirmed and failed
+   states must be distinguishable WITHOUT relying on colour alone. A new palette
+   is the easiest place to lose this.
+4. Scope discipline. Do not rewrite code that already passes.
+5. Work on a branch named `astra/iteration-4`. Do not commit to `main`.
+6. This is a one-shot iteration. No clarification will be provided.
+
+SCORING
+Section L (10 points), Section M (6 points), and gates G10 and G11. Core is now
+134 points; Extended is 26, since EXT-7 was promoted into Core. Plus a full
+regression check of rounds 1 through 3.
+
+DELIVERABLE
+A working, deployed, installable application with CI green, which functions
+fully offline after one online load and surfaces updates explicitly rather than
+swapping versions underneath the user.
+```
