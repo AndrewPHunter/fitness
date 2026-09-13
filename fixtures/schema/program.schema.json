@@ -2,35 +2,61 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://andrewphunter.github.io/fitness/schema/program.schema.json",
   "title": "Fitness Program",
-  "description": "A descriptive workout program. Structure only: no progression logic, no expressions, nothing the application evaluates. See specs/03-program-schema.md.",
+  "description": "A descriptive workout program. Structure only: no progression logic, no expressions, nothing the application evaluates. Format revision 2 (Amendment 004) adds optional repsMax and the per-set array form of sets. See specs/03-program-schema.md.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["programId", "version", "name", "exercises", "sessions", "schedule"],
+  "required": [
+    "programId",
+    "version",
+    "name",
+    "exercises",
+    "sessions",
+    "schedule"
+  ],
   "properties": {
-    "programId": { "$ref": "#/$defs/slug" },
-    "version": { "type": "integer", "minimum": 1 },
-    "name": { "type": "string", "minLength": 1, "maxLength": 120 },
-    "description": { "type": "string", "maxLength": 2000 },
+    "programId": {
+      "$ref": "#/$defs/slug"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 2000
+    },
     "exercises": {
       "type": "array",
       "minItems": 1,
       "maxItems": 200,
-      "items": { "$ref": "#/$defs/exerciseDefinition" }
+      "items": {
+        "$ref": "#/$defs/exerciseDefinition"
+      }
     },
     "sessions": {
       "type": "array",
       "minItems": 1,
       "maxItems": 60,
-      "items": { "$ref": "#/$defs/session" }
+      "items": {
+        "$ref": "#/$defs/session"
+      }
     },
-    "schedule": { "$ref": "#/$defs/schedule" },
+    "schedule": {
+      "$ref": "#/$defs/schedule"
+    },
     "frequencyTargets": {
       "type": "array",
       "maxItems": 200,
-      "items": { "$ref": "#/$defs/frequencyTarget" }
+      "items": {
+        "$ref": "#/$defs/frequencyTarget"
+      }
     }
   },
-
   "$defs": {
     "slug": {
       "type": "string",
@@ -39,43 +65,82 @@
       "maxLength": 64,
       "description": "Lowercase kebab-case identifier."
     },
-
     "exerciseDefinition": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["exerciseId", "name"],
+      "required": [
+        "exerciseId",
+        "name"
+      ],
       "properties": {
         "exerciseId": {
           "$ref": "#/$defs/slug",
           "description": "Stable identity ACROSS programs. History is unified by this value. See specs/02-domain-model.md section 2.2."
         },
-        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
-        "notes": { "type": "string", "maxLength": 2000 }
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 2000
+        }
       }
     },
-
     "load": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["value", "unit"],
+      "required": [
+        "value",
+        "unit"
+      ],
       "properties": {
-        "value": { "type": "number", "exclusiveMinimum": 0, "maximum": 2000 },
-        "unit": { "enum": ["kg", "lb"] }
+        "value": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 2000
+        },
+        "unit": {
+          "enum": [
+            "kg",
+            "lb"
+          ]
+        }
       }
     },
-
     "exerciseEntry": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["exerciseId", "sets", "reps"],
+      "required": [
+        "exerciseId",
+        "sets"
+      ],
       "properties": {
-        "exerciseId": { "$ref": "#/$defs/slug" },
-        "sets": { "type": "integer", "minimum": 1, "maximum": 20 },
+        "exerciseId": {
+          "$ref": "#/$defs/slug"
+        },
+        "sets": {
+          "description": "An integer count of uniform sets, or an array prescribing each set in order.",
+          "if": {
+            "type": "array"
+          },
+          "then": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 20,
+            "items": {
+              "$ref": "#/$defs/perSetPrescription"
+            }
+          },
+          "else": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20
+          }
+        },
         "reps": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 100,
-          "description": "A fixed number. Rep ranges and AMRAP are out of scope."
+          "$ref": "#/$defs/reps"
         },
         "targetWeight": {
           "$ref": "#/$defs/load",
@@ -88,40 +153,112 @@
           "multipleOf": 0.5,
           "description": "Display-only authoring intent. Never enforced. See constitution C9."
         },
-        "restSeconds": { "type": "integer", "minimum": 0, "maximum": 600 },
-        "notes": { "type": "string", "maxLength": 2000 }
-      }
+        "restSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 600
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "repsMax": {
+          "$ref": "#/$defs/repsMax"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "sets"
+            ],
+            "properties": {
+              "sets": {
+                "type": "integer"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "reps"
+            ],
+            "properties": {
+              "reps": {
+                "$ref": "#/$defs/reps"
+              }
+            }
+          }
+        }
+      ]
     },
-
     "block": {
       "type": "object",
-      "required": ["type"],
-      "properties": { "type": { "enum": ["single", "superset"] } },
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "single",
+            "superset"
+          ]
+        }
+      },
       "description": "Discriminated on `type`. if/then is used rather than oneOf so that a failure inside one branch does not also report the unrelated failure of the other branch. See specs/03-program-schema.md section 3.5.",
       "allOf": [
         {
-          "if": { "required": ["type"], "properties": { "type": { "const": "single" } } },
+          "if": {
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "single"
+              }
+            }
+          },
           "then": {
-            "required": ["entry"],
+            "required": [
+              "entry"
+            ],
             "additionalProperties": false,
             "properties": {
-              "type": { "const": "single" },
-              "entry": { "$ref": "#/$defs/exerciseEntry" }
+              "type": {
+                "const": "single"
+              },
+              "entry": {
+                "$ref": "#/$defs/exerciseEntry"
+              }
             }
           }
         },
         {
-          "if": { "required": ["type"], "properties": { "type": { "const": "superset" } } },
+          "if": {
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "superset"
+              }
+            }
+          },
           "then": {
-            "required": ["entries"],
+            "required": [
+              "entries"
+            ],
             "additionalProperties": false,
             "properties": {
-              "type": { "const": "superset" },
+              "type": {
+                "const": "superset"
+              },
               "entries": {
                 "type": "array",
                 "minItems": 2,
                 "maxItems": 8,
-                "items": { "$ref": "#/$defs/exerciseEntry" },
+                "items": {
+                  "$ref": "#/$defs/exerciseEntry"
+                },
                 "description": "Logged round-robin. Supersets do not nest."
               }
             }
@@ -129,66 +266,130 @@
         }
       ]
     },
-
     "session": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["sessionId", "name", "blocks"],
+      "required": [
+        "sessionId",
+        "name",
+        "blocks"
+      ],
       "properties": {
-        "sessionId": { "$ref": "#/$defs/slug" },
-        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
-        "notes": { "type": "string", "maxLength": 2000 },
+        "sessionId": {
+          "$ref": "#/$defs/slug"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 2000
+        },
         "blocks": {
           "type": "array",
           "minItems": 1,
           "maxItems": 40,
-          "items": { "$ref": "#/$defs/block" }
+          "items": {
+            "$ref": "#/$defs/block"
+          }
         }
       }
     },
-
     "schedule": {
       "type": "object",
-      "required": ["mode"],
-      "properties": { "mode": { "enum": ["rotation", "weekdays"] } },
+      "required": [
+        "mode"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "rotation",
+            "weekdays"
+          ]
+        }
+      },
       "description": "Discriminated on `mode`. if/then used for the same reason as `block`.",
       "allOf": [
         {
-          "if": { "required": ["mode"], "properties": { "mode": { "const": "rotation" } } },
+          "if": {
+            "required": [
+              "mode"
+            ],
+            "properties": {
+              "mode": {
+                "const": "rotation"
+              }
+            }
+          },
           "then": {
-            "required": ["sequence"],
+            "required": [
+              "sequence"
+            ],
             "additionalProperties": false,
             "properties": {
-              "mode": { "const": "rotation" },
+              "mode": {
+                "const": "rotation"
+              },
               "sequence": {
                 "type": "array",
                 "minItems": 1,
                 "maxItems": 60,
-                "items": { "$ref": "#/$defs/slug" },
+                "items": {
+                  "$ref": "#/$defs/slug"
+                },
                 "description": "Ordered sessionIds. Repetition expresses frequency. Advances only on session completion."
               }
             }
           }
         },
         {
-          "if": { "required": ["mode"], "properties": { "mode": { "const": "weekdays" } } },
+          "if": {
+            "required": [
+              "mode"
+            ],
+            "properties": {
+              "mode": {
+                "const": "weekdays"
+              }
+            }
+          },
           "then": {
-            "required": ["days"],
+            "required": [
+              "days"
+            ],
             "additionalProperties": false,
             "properties": {
-              "mode": { "const": "weekdays" },
+              "mode": {
+                "const": "weekdays"
+              },
               "days": {
                 "type": "object",
                 "additionalProperties": false,
                 "minProperties": 1,
                 "properties": {
-                  "mon": { "$ref": "#/$defs/slug" },
-                  "tue": { "$ref": "#/$defs/slug" },
-                  "wed": { "$ref": "#/$defs/slug" },
-                  "thu": { "$ref": "#/$defs/slug" },
-                  "fri": { "$ref": "#/$defs/slug" },
-                  "sat": { "$ref": "#/$defs/slug" },
-                  "sun": { "$ref": "#/$defs/slug" }
+                  "mon": {
+                    "$ref": "#/$defs/slug"
+                  },
+                  "tue": {
+                    "$ref": "#/$defs/slug"
+                  },
+                  "wed": {
+                    "$ref": "#/$defs/slug"
+                  },
+                  "thu": {
+                    "$ref": "#/$defs/slug"
+                  },
+                  "fri": {
+                    "$ref": "#/$defs/slug"
+                  },
+                  "sat": {
+                    "$ref": "#/$defs/slug"
+                  },
+                  "sun": {
+                    "$ref": "#/$defs/slug"
+                  }
                 }
               }
             }
@@ -196,13 +397,17 @@
         }
       ]
     },
-
     "frequencyTarget": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["exerciseId", "perWeek"],
+      "required": [
+        "exerciseId",
+        "perWeek"
+      ],
       "properties": {
-        "exerciseId": { "$ref": "#/$defs/slug" },
+        "exerciseId": {
+          "$ref": "#/$defs/slug"
+        },
         "perWeek": {
           "type": "number",
           "exclusiveMinimum": 0,
@@ -210,6 +415,52 @@
           "description": "Display-only authoring intent. Never enforced, never validated against the sequence. See constitution C9."
         }
       }
+    },
+    "perSetPrescription": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reps"
+      ],
+      "description": "One prescribed set. Used when `sets` is an array. See specs/14-amendment-004-reps-and-per-set.md.",
+      "properties": {
+        "reps": {
+          "$ref": "#/$defs/reps"
+        },
+        "repsMax": {
+          "$ref": "#/$defs/repsMax"
+        },
+        "targetWeight": {
+          "$ref": "#/$defs/load"
+        },
+        "targetRpe": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10,
+          "multipleOf": 0.5
+        },
+        "restSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 600
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 2000
+        }
+      }
+    },
+    "reps": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100,
+      "description": "A fixed number of repetitions. Ranges are expressed with repsMax."
+    },
+    "repsMax": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100,
+      "description": "Optional top of a rep range. Must be strictly greater than reps (SEM-9)."
     }
   }
 }

@@ -1,5 +1,8 @@
 # 03 — Program Schema & Validation
 
+> **Amended.** [Amendment 004](14-amendment-004-reps-and-per-set.md) adds `repsMax`,
+> the array form of `sets`, and rules SEM-9 to SEM-11. The shipped schema is format revision 2.
+
 The normative machine-readable contract is
 [`fixtures/schema/program.schema.json`](../fixtures/schema/program.schema.json)
 (JSON Schema draft 2020-12). This document explains it and specifies the validation behaviour
@@ -31,6 +34,9 @@ Implemented as a **pure function** over the parsed document. This catches:
 | SEM-6 | `Program.sessions[].sessionId` values are unique within the file |
 | SEM-7 | Every declared exercise is referenced by at least one session (unused-exercise check) |
 | SEM-8 | Every declared session is reachable from the schedule (unreachable-session check) |
+| SEM-9 | Where `repsMax` is present, `repsMax > reps` strictly ([Amendment 004](14-amendment-004-reps-and-per-set.md)) |
+| SEM-10 | Where `sets` is an integer, entry-level `reps` is required |
+| SEM-11 | Where `sets` is an array, entry-level `reps`/`repsMax`/`targetWeight`/`targetRpe`/`restSeconds` are forbidden |
 
 SEM-7 and SEM-8 are **errors, not warnings**. A program containing content the user can never
 reach is incoherent, and silently ignoring it would violate [C1](00-constitution.md).
