@@ -190,10 +190,10 @@ export function DataPage({ store }: { store: AppStore }) {
         </p>
       </section>
       <section className="surface-quiet stack">
-        <h2>Keep it safer on iPhone</h2>
+        <h2>Installation is not a backup</h2>
         <p>
-          Add this app to your Home Screen: in Safari, tap Share, then “Add to Home Screen.” This
-          can reduce storage eviction risk, but it does not replace regular JSON exports.
+          Home Screen installation can reduce storage eviction risk. Check the live installation
+          status in <a href="#/settings">Settings</a>, and keep making regular JSON exports.
         </p>
       </section>
       {replaceConfirm && backup ? (

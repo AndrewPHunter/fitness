@@ -1,10 +1,20 @@
 import { useState } from 'react';
 import type { Settings } from '../../domain/program/types';
 import type { AppStore } from '../../domain/state/appStore';
+import type { PwaAdapter, PwaState } from '../../platform/pwa/PwaAdapter';
 import { Button } from '../../ui/atoms/Button';
 import { FormField } from '../../ui/molecules/FormField';
+import { InstallPanel } from '../pwa/InstallPanel';
 
-export function SettingsPage({ store }: { store: AppStore }) {
+export function SettingsPage({
+  store,
+  pwaAdapter,
+  pwaState,
+}: {
+  store: AppStore;
+  pwaAdapter: PwaAdapter;
+  pwaState: PwaState;
+}) {
   const [unit, setUnit] = useState<Settings['defaultUnit']>(store.data.settings.defaultUnit);
   const [theme, setTheme] = useState<Settings['theme']>(store.data.settings.theme);
   return (
@@ -50,6 +60,7 @@ export function SettingsPage({ store }: { store: AppStore }) {
           Save settings
         </Button>
       </section>
+      <InstallPanel adapter={pwaAdapter} state={pwaState} />
     </main>
   );
 }

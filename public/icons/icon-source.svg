@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Fieldwork">
+  <rect width="512" height="512" fill="#14181F" />
+  <circle cx="256" cy="256" r="164" fill="#1C222B" stroke="#4C9AFF" stroke-width="20" />
+  <path d="M172 146h183v62H238v55h99v60h-99v71h-66V146Z" fill="#E8ECF1" />
+  <circle cx="348" cy="367" r="25" fill="#4C9AFF" />
+</svg>

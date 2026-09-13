@@ -9,16 +9,22 @@ import { ProgramsPage } from '../features/programs/ProgramsPage';
 import { ActiveSessionPage } from '../features/session/ActiveSessionPage';
 import { TodayPage } from '../features/session/TodayPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
+import { PwaUpdateNotice } from '../features/pwa/PwaUpdateNotice';
+import { usePwa } from '../features/pwa/usePwa';
 import { downloadText } from '../platform/files/files';
 import { createBrowserClipboardAdapter } from '../platform/clipboard/browserClipboardAdapter';
+import { createBrowserPwaAdapter } from '../platform/pwa/browserPwaAdapter';
 import { applyTheme } from '../platform/theme/applyTheme';
 import { Button } from '../ui/atoms/Button';
 import { AppShell } from '../ui/templates/AppShell';
 import { usePersistedStore } from './PersistedProvider';
 
+const pwaAdapter = createBrowserPwaAdapter();
+
 export function App() {
   const { store, fatal } = usePersistedStore();
   const clipboard = useMemo(() => createBrowserClipboardAdapter(), []);
+  const pwaState = usePwa(pwaAdapter);
   useEffect(() => {
     if (!store) return;
     const theme = store.data.settings.theme;
@@ -56,6 +62,11 @@ export function App() {
     );
   return (
     <AppShell>
+      <PwaUpdateNotice
+        adapter={pwaAdapter}
+        state={pwaState}
+        sessionInProgress={store.activeSession() !== null}
+      />
       <Routes>
         <Route path="/" element={<TodayPage store={store} />} />
         <Route
@@ -74,7 +85,10 @@ export function App() {
         <Route path="/history" element={<HistoryPage store={store} />} />
         <Route path="/history/:exerciseId" element={<ExerciseHistoryPage store={store} />} />
         <Route path="/data" element={<DataPage store={store} />} />
-        <Route path="/settings" element={<SettingsPage store={store} />} />
+        <Route
+          path="/settings"
+          element={<SettingsPage store={store} pwaAdapter={pwaAdapter} pwaState={pwaState} />}
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <div className="visually-hidden" aria-live="polite">

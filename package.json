@@ -11,6 +11,7 @@
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --max-warnings 0",
+    "check:contrast": "node scripts/check-contrast.mjs",
     "format": "prettier --check .",
     "format:write": "prettier --write .",
     "test": "vitest run",

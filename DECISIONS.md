@@ -1,12 +1,14 @@
 # Implementation decisions
 
-- **Visual direction — instrumented field notebook:** Fieldwork is calm, durable, and direct under
-  divided attention: high-contrast paper and ink, restrained moss and safety-orange, large physical
-  controls, and locally bundled typefaces. During logging, compact amber prescription strips act as
-  reference while oversized actual-value inputs command the screen. Dashed input borders plus a
-  hollow-circle “Not saved” marker identify unconfirmed data; checkmarked “Saved” rows and
-  exclamation-mark failure panels distinguish outcomes without colour. Decoration stays outside the
-  active logging controls, preserving the phone viewport for the current set.
+- **Visual direction — deep-slate instrument panel:** Fieldwork is dark-first, calm, durable, and
+  direct under divided attention. The specified blue-grey ground, off-white text, and single cool
+  accent replace the former moss and safety-orange palette. During logging, compact accent-tinted
+  prescription strips remain reference while oversized actual-value inputs command the screen.
+  Dashed input borders plus a hollow-circle “Not saved” marker identify unconfirmed data;
+  checkmarked “Saved” rows and exclamation-mark failure panels distinguish outcomes without colour.
+  Decoration stays outside active logging controls. Amendment 003 does not state a light
+  `--border-subtle`; `#D0D5DD` is used as the passive-divider counterpart to its specified
+  `#667085` strong boundary.
 - **Leaving a partial session:** The data model has no abandoned status and logged sets may not be
   deleted as a side effect. “Leave session” therefore keeps the session in progress and returns to
   Today, where it can be resumed. This preserves every confirmed set without falsely marking the
