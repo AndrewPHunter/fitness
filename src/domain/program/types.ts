@@ -11,15 +11,27 @@ export interface ExerciseDefinition {
   notes?: string;
 }
 
-export interface ExerciseEntry {
-  exerciseId: string;
-  sets: number;
+export interface PerSetPrescription {
   reps: number;
+  repsMax?: number;
   targetWeight?: Load;
   targetRpe?: number;
   restSeconds?: number;
   notes?: string;
 }
+
+export interface UniformExerciseEntry extends PerSetPrescription {
+  exerciseId: string;
+  sets: number;
+}
+
+export interface PerSetExerciseEntry {
+  exerciseId: string;
+  sets: PerSetPrescription[];
+  notes?: string;
+}
+
+export type ExerciseEntry = UniformExerciseEntry | PerSetExerciseEntry;
 
 export type Block =
   { type: 'single'; entry: ExerciseEntry } | { type: 'superset'; entries: ExerciseEntry[] };

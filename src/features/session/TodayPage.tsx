@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { entryPrescriptionSummary } from '../../domain/program/prescription';
 import { nextSession } from '../../domain/schedule/nextSession';
 import type { AppStore } from '../../domain/state/appStore';
 import { Badge } from '../../ui/atoms/Badge';
@@ -125,8 +126,8 @@ export function TodayPage({ store }: { store: AppStore }) {
                 </span>
                 <strong>
                   {block.type === 'single'
-                    ? `${block.entry.sets} × ${block.entry.reps}`
-                    : block.entries.map((entry) => `${entry.sets}×${entry.reps}`).join(' / ')}
+                    ? entryPrescriptionSummary(block.entry)
+                    : block.entries.map(entryPrescriptionSummary).join(' / ')}
                 </strong>
               </div>
             ))}

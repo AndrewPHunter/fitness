@@ -1,22 +1,38 @@
-import type { Program, ValidationError } from './types';
+import { isPerSetEntry } from './prescription';
+import type { ExerciseEntry, PerSetPrescription, Program, ValidationError } from './types';
 
-function entries(program: Program): Array<{ exerciseId: string; path: string }> {
+interface EntryLocation {
+  entry: ExerciseEntry;
+  path: string;
+}
+
+function entries(program: Program): EntryLocation[] {
   return program.sessions.flatMap((session, sessionIndex) =>
     session.blocks.flatMap((block, blockIndex) => {
       if (block.type === 'single') {
         return [
           {
-            exerciseId: block.entry.exerciseId,
-            path: `/sessions/${sessionIndex}/blocks/${blockIndex}/entry/exerciseId`,
+            entry: block.entry,
+            path: `/sessions/${sessionIndex}/blocks/${blockIndex}/entry`,
           },
         ];
       }
-      return block.entries.map((entry, entryIndex) => ({
-        exerciseId: entry.exerciseId,
-        path: `/sessions/${sessionIndex}/blocks/${blockIndex}/entries/${entryIndex}/exerciseId`,
+      return block.entries.map((entry, entryIndex): EntryLocation => ({
+        entry,
+        path: `/sessions/${sessionIndex}/blocks/${blockIndex}/entries/${entryIndex}`,
       }));
     }),
   );
+}
+
+function validateRepRange(prescription: PerSetPrescription, path: string): ValidationError | null {
+  if (prescription.repsMax === undefined || prescription.repsMax > prescription.reps) return null;
+  return {
+    layer: 'semantic',
+    code: 'SEM-9',
+    path: `${path}/repsMax`,
+    message: `repsMax must be greater than reps to form a range; found reps ${prescription.reps} and repsMax ${prescription.repsMax}. Increase repsMax or remove it for a fixed rep target.`,
+  };
 }
 
 export function validateSemantics(program: Program): ValidationError[] {
@@ -25,12 +41,12 @@ export function validateSemantics(program: Program): ValidationError[] {
   const declaredSessions = new Set(program.sessions.map((session) => session.sessionId));
   const referencedEntries = entries(program);
 
-  for (const entry of referencedEntries) {
+  for (const { entry, path } of referencedEntries) {
     if (!declaredExercises.has(entry.exerciseId)) {
       errors.push({
         layer: 'semantic',
         code: 'SEM-1',
-        path: entry.path,
+        path: `${path}/exerciseId`,
         message: `Exercise ${JSON.stringify(entry.exerciseId)} must be declared in /exercises.`,
       });
     }
@@ -92,7 +108,7 @@ export function validateSemantics(program: Program): ValidationError[] {
     else firstSession.set(session.sessionId, index);
   });
 
-  const referencedExercises = new Set(referencedEntries.map((entry) => entry.exerciseId));
+  const referencedExercises = new Set(referencedEntries.map(({ entry }) => entry.exerciseId));
   program.exercises.forEach((exercise, index) => {
     if (!referencedExercises.has(exercise.exerciseId))
       errors.push({
@@ -116,5 +132,37 @@ export function validateSemantics(program: Program): ValidationError[] {
         message: `Session ${JSON.stringify(session.sessionId)} must be reachable from the schedule.`,
       });
   });
-  return errors.sort((left, right) => left.path.localeCompare(right.path));
+
+  const entryLevelSetFields = [
+    'reps',
+    'repsMax',
+    'targetWeight',
+    'targetRpe',
+    'restSeconds',
+  ] as const;
+  for (const { entry, path } of referencedEntries) {
+    if (isPerSetEntry(entry)) {
+      const rawEntry = entry as unknown as Record<string, unknown>;
+      for (const field of entryLevelSetFields) {
+        if (!Object.hasOwn(rawEntry, field)) continue;
+        errors.push({
+          layer: 'semantic',
+          code: 'SEM-11',
+          path: `${path}/${field}`,
+          message: `Entry-level field ${JSON.stringify(field)} is not allowed when sets is an array. Move ${JSON.stringify(field)} into the applicable object or objects in ${path}/sets.`,
+        });
+      }
+      entry.sets.forEach((prescription, setIndex) => {
+        const error = validateRepRange(prescription, `${path}/sets/${setIndex}`);
+        if (error) errors.push(error);
+      });
+    } else {
+      const error = validateRepRange(entry, path);
+      if (error) errors.push(error);
+    }
+  }
+
+  return errors.sort(
+    (left, right) => left.path.localeCompare(right.path) || left.code.localeCompare(right.code),
+  );
 }

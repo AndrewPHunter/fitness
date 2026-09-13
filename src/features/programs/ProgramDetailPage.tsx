@@ -1,4 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
+import { entryPrescriptionSummary } from '../../domain/program/prescription';
 import type { AppStore } from '../../domain/state/appStore';
 import { Badge } from '../../ui/atoms/Badge';
 import { Button } from '../../ui/atoms/Button';
@@ -66,9 +67,7 @@ export function ProgramDetailPage({ store }: { store: AppStore }) {
                         )?.name
                       }
                     </span>
-                    <strong>
-                      {entry.sets} × {entry.reps}
-                    </strong>
+                    <strong>{entryPrescriptionSummary(entry)}</strong>
                   </li>
                 ))}
             </ul>
