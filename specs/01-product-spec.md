@@ -1,6 +1,9 @@
 # 01 — Product Specification
 
-> **Amended.** [Amendment 002](12-amendment-002-paste-import.md) adds CORE-15 (paste-to-import)
+> **Amended.** [Amendment 003](13-amendment-003-pwa-and-palette.md) adds CORE-16 (installable
+> PWA, promoted from EXT-7) and VIS-6 (colour scheme).
+>
+> [Amendment 002](12-amendment-002-paste-import.md) adds CORE-15 (paste-to-import)
 > and repairs the band table.
 >
 > [Amendment 001](11-amendment-001-program-authoring.md) adds CORE-14
@@ -66,6 +69,7 @@ frictionless to record and to read.
 | CORE-13 | Deploy as a static site to GitHub Pages via GitHub Actions |
 | CORE-14 | In-app program authoring: hand the user the prompt, schema and example without leaving the app — see [Amendment 001](11-amendment-001-program-authoring.md) |
 | CORE-15 | Import a program by pasting its JSON, with no file written to the device — see [Amendment 002](12-amendment-002-paste-import.md) |
+| CORE-16 | Installable to the home screen, fully functional offline, never silently serving a stale version — see [Amendment 003](13-amendment-003-pwa-and-palette.md) |
 
 ### Extended — bonus, differentiating
 
@@ -77,7 +81,7 @@ frictionless to record and to read.
 | EXT-4 | Personal-record detection and display |
 | EXT-5 | Per-exercise progress charts |
 | EXT-6 | Exercise aliasing — mapping two `exerciseId`s onto one history stream |
-| EXT-7 | Installable PWA with an offline app shell |
+| ~~EXT-7~~ | ~~Installable PWA with an offline app shell~~ — **promoted to CORE-16** by [Amendment 003](13-amendment-003-pwa-and-palette.md); Extended is now 26 points |
 | EXT-8 | Screen wake lock during an active session |
 | EXT-9 | Backup staleness indicator ("last exported N days ago") |
 | EXT-10 | Partial-session resume after the browser is closed mid-workout |

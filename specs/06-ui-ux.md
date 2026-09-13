@@ -1,6 +1,9 @@
 # 06 — UI & UX
 
-> **Amended.** [Amendment 002](12-amendment-002-paste-import.md) makes pasted JSON the primary
+> **Amended.** [Amendment 003](13-amendment-003-pwa-and-palette.md) sets the colour scheme
+> (VIS-6..VIS-10) and requires contrast to be measured in CI, not asserted.
+>
+> [Amendment 002](12-amendment-002-paste-import.md) makes pasted JSON the primary
 > import affordance on `#/programs` (§12.3).
 >
 > [Amendment 001](11-amendment-001-program-authoring.md) adds the

@@ -14,11 +14,12 @@ also why the two are tracked in separate columns and never averaged.
 
 ## Log
 
-| #   | Date       | Model       | Type          | Spec baseline | Brief              | Gates   | Core    | Ext  | Final | Band             |
-| --- | ---------- | ----------- | ------------- | ------------- | ------------------ | ------- | ------- | ---- | ----- | ---------------- |
-| 1   | 2026-09-10 | GPT-6 Astra | Cold one-shot | `a7bd40c`     | Full specification | 7/7     | 99/100  | 0/30 | 99    | Strong           |
-| 2   | 2026-09-10 | GPT-6 Astra | Iteration     | `1d58f54`     | Amendment 001      | G8 pass | 110/110 | 0/30 | 110   | Complete [^band] |
-| 3   | 2026-09-11 | GPT-6 Astra | Iteration     | `f184055`     | Amendment 002      | G9 pass | 118/118 | 0/30 | 118   | Complete [^k5]   |
+| #   | Date       | Model       | Type          | Spec baseline    | Brief              | Gates   | Core    | Ext  | Final | Band             |
+| --- | ---------- | ----------- | ------------- | ---------------- | ------------------ | ------- | ------- | ---- | ----- | ---------------- |
+| 1   | 2026-09-10 | GPT-6 Astra | Cold one-shot | `a7bd40c`        | Full specification | 7/7     | 99/100  | 0/30 | 99    | Strong           |
+| 2   | 2026-09-10 | GPT-6 Astra | Iteration     | `1d58f54`        | Amendment 001      | G8 pass | 110/110 | 0/30 | 110   | Complete [^band] |
+| 3   | 2026-09-11 | GPT-6 Astra | Iteration     | `f184055`        | Amendment 002      | G9 pass | 118/118 | 0/30 | 118   | Complete [^k5]   |
+| 4   | —          | GPT-6 Astra | Iteration     | `main` @ handoff | Amendment 003      | —       | —       | —    | —     | —                |
 
 Records: [round 1](2026-09-10-gpt-6-astra.md) · [iteration 2](2026-09-10-gpt-6-astra-iteration-2.md) · [iteration 3](2026-09-11-gpt-6-astra-iteration-3.md)
 

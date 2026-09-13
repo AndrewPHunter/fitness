@@ -1,5 +1,9 @@
 # 05 — Persistence
 
+> **Amended.** [Amendment 003](13-amendment-003-pwa-and-palette.md) promotes the
+> installable PWA to CORE-16. HAZ-A2 is no longer satisfied by written guidance alone —
+> being genuinely installable is the mitigation for Hazard A.
+
 All persistence is browser `localStorage`. There is no backend, no IndexedDB requirement, and
 no sync. Access is confined to `platform/storage/` ([04 §4.5](04-architecture.md)).
 
