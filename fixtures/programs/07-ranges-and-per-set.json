@@ -1,0 +1,59 @@
+{
+  "programId": "range-and-top-set",
+  "version": 1,
+  "name": "Ranges and Top Sets",
+  "description": "Exercises both Amendment 004 additions: rep ranges via repsMax, and per-set prescription via the array form of sets, including inside a superset.",
+  "exercises": [
+    { "exerciseId": "barbell-back-squat", "name": "Back Squat" },
+    { "exerciseId": "barbell-bench-press", "name": "Bench Press" },
+    { "exerciseId": "barbell-row", "name": "Barbell Row" },
+    { "exerciseId": "ez-bar-curl", "name": "EZ-Bar Curl" },
+    { "exerciseId": "face-pull", "name": "Face Pull" }
+  ],
+  "sessions": [
+    {
+      "sessionId": "a-top-set",
+      "name": "A — Top set, then back-offs",
+      "blocks": [
+        {
+          "type": "single",
+          "entry": {
+            "exerciseId": "barbell-back-squat",
+            "sets": [
+              { "reps": 5, "targetRpe": 9.5, "targetWeight": { "value": 140, "unit": "kg" }, "restSeconds": 300, "notes": "Top set. Only this one goes near failure." },
+              { "reps": 6, "targetRpe": 8, "targetWeight": { "value": 120, "unit": "kg" }, "restSeconds": 180 },
+              { "reps": 6, "targetRpe": 8, "targetWeight": { "value": 120, "unit": "kg" }, "restSeconds": 180 }
+            ],
+            "notes": "Belt from the top set onward."
+          }
+        },
+        {
+          "type": "single",
+          "entry": { "exerciseId": "barbell-bench-press", "sets": 3, "reps": 8, "repsMax": 12, "targetRpe": 8, "restSeconds": 180 }
+        },
+        {
+          "type": "superset",
+          "entries": [
+            { "exerciseId": "barbell-row", "sets": 3, "reps": 8, "repsMax": 12, "targetRpe": 8 },
+            { "exerciseId": "face-pull", "sets": 3, "reps": 12, "repsMax": 20 }
+          ]
+        }
+      ]
+    },
+    {
+      "sessionId": "b-per-set-superset",
+      "name": "B — Per-set prescription inside a superset",
+      "blocks": [
+        {
+          "type": "superset",
+          "entries": [
+            { "exerciseId": "ez-bar-curl", "sets": [ { "reps": 10, "targetRpe": 7 }, { "reps": 10, "targetRpe": 8 }, { "reps": 8, "targetRpe": 9 } ] },
+            { "exerciseId": "face-pull", "sets": 3, "reps": 15 }
+          ]
+        }
+      ]
+    }
+  ],
+  "schedule": { "mode": "rotation", "sequence": ["a-top-set", "b-per-set-superset", "a-top-set"] },
+  "frequencyTargets": [{ "exerciseId": "barbell-back-squat", "perWeek": 2 }]
+}

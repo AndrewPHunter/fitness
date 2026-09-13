@@ -216,3 +216,71 @@ A working, deployed, installable application with CI green, which functions
 fully offline after one online load and surfaces updates explicitly rather than
 swapping versions underneath the user.
 ```
+
+### Iteration 5 — GPT-6 Astra — Amendment 004
+
+```
+Continue work on the repository you previously implemented:
+https://github.com/AndrewPHunter/fitness
+
+This is ITERATION 5. It is not a fresh build. Your previous four rounds are on
+`main`. Round 1 scored 99/100; iterations 2, 3 and 4 all reached Core ceiling
+with no regression.
+
+READ FIRST, IN THIS ORDER
+1. `specs/14-amendment-004-reps-and-per-set.md` — the brief for this round.
+2. `evaluation/2026-09-13-gpt-6-astra-iteration-4.md` — how your last round was
+   graded, including a process violation noted there.
+3. `evaluation/iterations.md` — the rules this round is scored under.
+4. `specs/00-constitution.md` — unchanged, and still takes precedence over every
+   other document including this prompt.
+
+ALREADY DONE FOR YOU
+The format changes are shipped. `fixtures/schema/program.schema.json`,
+`fixtures/authoring-prompt.md`, and a new fixture
+`fixtures/programs/07-ranges-and-per-set.json` are already updated. Do not modify
+them. Your work is the application, not the format.
+
+TASK
+Implement Amendment 004, and nothing else. Two parts, scored separately:
+
+Part A — CORE-17, rep ranges (RNG-1..RNG-5, SEM-9).
+Part B — CORE-18, per-set prescription (SET-1..SET-7, SEM-10, SEM-11).
+
+Two requirements are traps, and both are about honesty:
+
+- RNG-5. A rep range invites the app to notice when the top is reached. It must
+  not. No highlighting, no colour-coding, no "ready to progress", no comparison
+  of logged reps against the range beyond displaying both. Evaluating attainment
+  is a progression rule (C8) and judging the user against a declared target
+  (C9). Violations lose the points AND incur the constitution deductions.
+- SET-7 / SEM-11. When `sets` is an array, entry-level reps, repsMax,
+  targetWeight, targetRpe and restSeconds must be rejected — those describe a
+  set, and the elements now do that. additionalProperties cannot catch this;
+  it is a semantic rule, and its message must name the field and say where it
+  belongs.
+
+The schema expresses the `sets` union with if/then, not oneOf, so a malformed
+value yields one error rather than a paired type error. Do not change that.
+
+RULES
+1. Do not modify `specs/`, `fixtures/`, or `evaluation/`.
+2. No regression across all four previous rounds. In particular: the two invalid
+   fixtures still produce exactly 8 and 7 errors while writing nothing; paste and
+   upload still share one validation path; the authoring kit still injects the
+   user's own exercise IDs; the app still works offline and surfaces updates
+   explicitly; the contrast check still passes.
+3. Open a PULL REQUEST from branch `astra/iteration-5`. Do NOT push to `main`.
+   Iteration 4 committed straight to main with no PR, against the brief. Rounds
+   1 to 3 used pull requests. Use one.
+4. Scope discipline. Do not rewrite code that already passes.
+5. This is a one-shot iteration. No clarification will be provided.
+
+SCORING
+Section N (6 points), Section O (10 points), and gate G12. Core is now 150
+points; Extended remains 26. Plus a full regression check of rounds 1 to 4.
+
+DELIVERABLE
+A working, deployed application with CI green, in which fixture 07 imports and a
+session from it can be logged with each set showing its own prescription.
+```

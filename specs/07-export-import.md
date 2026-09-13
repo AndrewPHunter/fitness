@@ -1,5 +1,9 @@
 # 07 — Export & Import
 
+> **Amended.** [Amendment 004](14-amendment-004-reps-and-per-set.md) inserts
+> `prescribed_reps_max` after `prescribed_reps`, and per-set values resolve from the element
+> governing that row (SET-6).
+
 Export is not a convenience feature. Given [05 §5.4 Hazard A](05-persistence.md), **export is
 the only backup that exists.** It is graded accordingly.
 
@@ -46,7 +50,7 @@ One row per logged set. Header row required. Exact columns, in this order:
 ```
 session_log_id,program_id,program_version,session_id,session_name,started_at,completed_at,
 exercise_id,exercise_name,block_index,block_type,entry_index,set_index,
-prescribed_sets,prescribed_reps,target_weight_value,target_weight_unit,target_rpe,
+prescribed_sets,prescribed_reps,prescribed_reps_max,target_weight_value,target_weight_unit,target_rpe,
 actual_weight_value,actual_weight_unit,actual_reps,actual_rpe,logged_at
 ```
 

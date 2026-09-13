@@ -1,6 +1,9 @@
 # 01 — Product Specification
 
-> **Amended.** [Amendment 003](13-amendment-003-pwa-and-palette.md) adds CORE-16 (installable
+> **Amended.** [Amendment 004](14-amendment-004-reps-and-per-set.md) adds CORE-17 (rep ranges)
+> and CORE-18 (per-set prescription), withdrawing two non-goals in §1.5.
+>
+> [Amendment 003](13-amendment-003-pwa-and-palette.md) adds CORE-16 (installable
 > PWA, promoted from EXT-7) and VIS-6 (colour scheme).
 >
 > [Amendment 002](12-amendment-002-paste-import.md) adds CORE-15 (paste-to-import)
@@ -70,6 +73,8 @@ frictionless to record and to read.
 | CORE-14 | In-app program authoring: hand the user the prompt, schema and example without leaving the app — see [Amendment 001](11-amendment-001-program-authoring.md) |
 | CORE-15 | Import a program by pasting its JSON, with no file written to the device — see [Amendment 002](12-amendment-002-paste-import.md) |
 | CORE-16 | Installable to the home screen, fully functional offline, never silently serving a stale version — see [Amendment 003](13-amendment-003-pwa-and-palette.md) |
+| CORE-17 | Prescribe a rep range via `repsMax`, displayed but never evaluated — see [Amendment 004](14-amendment-004-reps-and-per-set.md) |
+| CORE-18 | Prescribe each set individually via the array form of `sets` — see [Amendment 004](14-amendment-004-reps-and-per-set.md) |
 
 ### Extended — bonus, differentiating
 
@@ -94,10 +99,10 @@ and may lose points under [C8](00-constitution.md) if they introduce interpretat
 - Any backend, API, account, authentication, or network request at runtime
 - Sync across devices
 - Progression logic, autoregulation, or weight suggestions beyond last-session prefill
-- Rep ranges (`8–12`), AMRAP sets, or any set whose prescribed reps are not a fixed number
+- ~~Rep ranges~~ — **withdrawn** by [Amendment 004](14-amendment-004-reps-and-per-set.md). AMRAP remains out of scope
 - Duration-based or distance-based work — no cardio, no timed holds, no carries
 - Drop sets, rest-pause, cluster sets, tempo prescription
-- Per-set weight variation within a single exercise entry (ramping sets)
+- ~~Per-set weight variation within a single entry~~ — **withdrawn** by [Amendment 004](14-amendment-004-reps-and-per-set.md)
 - Nutrition, bodyweight tracking, photos, measurements
 - Social features of any kind
 - An in-app LLM integration. Program authoring happens **outside** the app; see
