@@ -14,15 +14,42 @@ also why the two are tracked in separate columns and never averaged.
 
 ## Log
 
-| #   | Date       | Model       | Type          | Spec baseline | Brief              | Gates    | Core    | Ext  | Final | Band             |
-| --- | ---------- | ----------- | ------------- | ------------- | ------------------ | -------- | ------- | ---- | ----- | ---------------- |
-| 1   | 2026-09-10 | GPT-6 Astra | Cold one-shot | `a7bd40c`     | Full specification | 7/7      | 99/100  | 0/30 | 99    | Strong           |
-| 2   | 2026-09-10 | GPT-6 Astra | Iteration     | `1d58f54`     | Amendment 001      | G8 pass  | 110/110 | 0/30 | 110   | Complete [^band] |
-| 3   | 2026-09-11 | GPT-6 Astra | Iteration     | `f184055`     | Amendment 002      | G9 pass  | 118/118 | 0/30 | 118   | Complete [^k5]   |
-| 4   | 2026-09-13 | GPT-6 Astra | Iteration     | `5777539`     | Amendment 003      | G10 pass | 134/134 | 0/26 | 134   | Complete         |
-| 5   | 2026-09-13 | GPT-6 Astra | Iteration     | `7523d87`     | Amendment 004      | G12 pass | 150/150 | 0/26 | 150   | Complete         |
+| #   | Date       | Model       | Type          | Spec baseline    | Brief              | Gates    | Core    | Ext  | Final | Band             |
+| --- | ---------- | ----------- | ------------- | ---------------- | ------------------ | -------- | ------- | ---- | ----- | ---------------- |
+| 1   | 2026-09-10 | GPT-6 Astra | Cold one-shot | `a7bd40c`        | Full specification | 7/7      | 99/100  | 0/30 | 99    | Strong           |
+| 2   | 2026-09-10 | GPT-6 Astra | Iteration     | `1d58f54`        | Amendment 001      | G8 pass  | 110/110 | 0/30 | 110   | Complete [^band] |
+| 3   | 2026-09-11 | GPT-6 Astra | Iteration     | `f184055`        | Amendment 002      | G9 pass  | 118/118 | 0/30 | 118   | Complete [^k5]   |
+| 4   | 2026-09-13 | GPT-6 Astra | Iteration     | `5777539`        | Amendment 003      | G10 pass | 134/134 | 0/26 | 134   | Complete         |
+| 5   | 2026-09-13 | GPT-6 Astra | Iteration     | `7523d87`        | Amendment 004      | G12 pass | 150/150 | 0/26 | 150   | Complete         |
+| 6   | —          | GPT-6 Astra | Iteration     | `main` @ handoff | Amendment 005      | —        | —       | —    | —     | —                |
 
 Records: [round 1](2026-09-10-gpt-6-astra.md) · [iteration 2](2026-09-10-gpt-6-astra-iteration-2.md) · [iteration 3](2026-09-11-gpt-6-astra-iteration-3.md) · [iteration 4](2026-09-13-gpt-6-astra-iteration-4.md) · [iteration 5](2026-09-13-gpt-6-astra-iteration-5.md)
+
+## Direction-following
+
+Tracked because the owner wants to measure how well the model follows explicit instructions, as
+distinct from how good the resulting software is. A round can score full marks on the rubric while
+ignoring an instruction — iteration 4 did exactly that.
+
+| Outcome            | Meaning                                                                          |
+| ------------------ | -------------------------------------------------------------------------------- |
+| **Followed**       | Did what the instruction said                                                    |
+| **Not followed**   | Ignored or contradicted the instruction                                          |
+| **Misapplied**     | Followed it, but extended it beyond its scope in a way that caused a side effect |
+| **Not verifiable** | Cannot be checked from the repository or the running app                         |
+
+Rounds 1–5 predate numbered directives, so their counts are **reconstructed from the recorded
+evaluations** rather than scored against IDs. From iteration 6 the brief numbers every directive
+(D1, D2, …) and each record scores them individually (IT-6).
+
+| #         | Directives checked | Followed | Not followed | Misapplied | Notes                                                                                                                                                         |
+| --------- | ------------------ | -------- | ------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1         | 4                  | 4        | 0            | 0          | Control artifacts untouched; genuine silences only in DECISIONS.md; branch + PR #1; deployed under `/fitness/`                                                |
+| 2         | 5                  | 5        | 0            | 0          | Brief-only scope; no regression; branch + PR #4                                                                                                               |
+| 3         | 6                  | 5        | 0            | **1**      | PAS-10 (_no clipboard read_) constrains the app, but was also applied to test code — an iteration 2 e2e assertion was weakened to avoid reading the clipboard |
+| 4         | 7                  | 6        | **1**        | 0          | _"Do not commit to `main`"_ — committed straight to `main` with no pull request                                                                               |
+| 5         | 6                  | 6        | 0            | 0          | Corrected round 4's violation; PR #12                                                                                                                         |
+| **Total** | **28**             | **26**   | **1**        | **1**      | 93% followed                                                                                                                                                  |
 
 ## Rules for an iteration
 
@@ -35,6 +62,7 @@ These exist so an iteration cannot buy points by trading away work that already 
 | IT-3 | Scope is limited to the brief. Unrequested rewrites of passing code are not credited and increase regression risk.                                                           |
 | IT-4 | The brief's own criteria are scored normally. Prior findings addressed count; prior findings ignored stay lost.                                                              |
 | IT-5 | `specs/`, `fixtures/` and `evaluation/` remain unmodified by the model. Amendments and records are written by the owner, not the implementer.                                |
+| IT-6 | Every record includes a **Directions** section scoring each numbered directive in the brief as followed, not followed, misapplied, or not verifiable.                        |
 
 ## Regression check
 

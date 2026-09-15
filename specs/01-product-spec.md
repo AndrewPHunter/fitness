@@ -1,5 +1,7 @@
 # 01 — Product Specification
 
+> **Amended.** [Amendment 005](15-amendment-005-perceivable-feedback.md) adds CORE-19 (perceivable feedback and task flow).
+
 > **Amended.** [Amendment 004](14-amendment-004-reps-and-per-set.md) adds CORE-17 (rep ranges)
 > and CORE-18 (per-set prescription), withdrawing two non-goals in §1.5.
 >
@@ -75,6 +77,7 @@ frictionless to record and to read.
 | CORE-16 | Installable to the home screen, fully functional offline, never silently serving a stale version — see [Amendment 003](13-amendment-003-pwa-and-palette.md) |
 | CORE-17 | Prescribe a rep range via `repsMax`, displayed but never evaluated — see [Amendment 004](14-amendment-004-reps-and-per-set.md) |
 | CORE-18 | Prescribe each set individually via the array form of `sets` — see [Amendment 004](14-amendment-004-reps-and-per-set.md) |
+| CORE-19 | Every state-changing action has visible, in-viewport feedback, and every state change offers its next step — see [Amendment 005](15-amendment-005-perceivable-feedback.md) |
 
 ### Extended — bonus, differentiating
 

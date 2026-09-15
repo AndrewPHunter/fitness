@@ -284,3 +284,83 @@ DELIVERABLE
 A working, deployed application with CI green, in which fixture 07 imports and a
 session from it can be logged with each set showing its own prescription.
 ```
+
+### Iteration 6 — GPT-6 Astra — Amendment 005
+
+Directives are numbered. Each is scored individually in the round's record (IT-6).
+
+```
+Continue work on the repository you previously implemented:
+https://github.com/AndrewPHunter/fitness
+
+This is ITERATION 6. It is not a fresh build. Your five previous rounds are on
+`main`.
+
+Read these directions carefully. Each one is numbered and will be checked
+individually. Following the directions is being measured separately from the
+quality of the software.
+
+CONTEXT
+Real use of the app surfaced problems that five graded rounds did not catch:
+action confirmations exist only for screen readers, validation results render
+off-screen, and after activating a program there is no visible way to start it.
+Read the audit for the evidence.
+
+DIRECTIONS
+
+D1. Read, in this order, before writing any code:
+    a. specs/15-amendment-005-perceivable-feedback.md   (the brief)
+    b. evaluation/2026-09-14-ux-audit.md                (the evidence)
+    c. evaluation/iterations.md                         (the rules)
+    d. specs/00-constitution.md                         (takes precedence)
+
+D2. Implement Amendment 005, and nothing else.
+
+D3. Do not modify anything in specs/, fixtures/ or evaluation/.
+
+D4. Work on a branch named astra/iteration-6 and open a pull request.
+    Do not push to main.
+
+D5. No regression across rounds 1-5. In particular: the two invalid fixtures
+    still produce exactly 8 and 7 errors and write nothing; paste and upload
+    share one validation path; the authoring kit injects the user's own exercise
+    IDs; the app works offline and surfaces updates explicitly; rep ranges show
+    no attainment logic; per-set prescriptions display per set.
+
+D6. Do not change the visual direction or any palette token. New feedback uses
+    existing tokens. npm run check:contrast must still pass.
+
+D7. Keep the screen-reader announcements. Add visible feedback alongside them.
+    Do not replace one with the other. (FB-3)
+
+D8. Your perceivability helper must reject three cases, and must have its own
+    tests proving it does: a screen-reader-only confirmation inside the viewport,
+    visible text behind the fixed bottom navigation, and text below the fold.
+    Note: Playwright's toBeVisible() passes a screen-reader-only element, and
+    toBeInViewport() passes text hidden behind a fixed nav. Neither is enough
+    on its own. (VER-1, VER-4)
+
+D9. Offer Discard only for a session with zero logged sets. Never offer it once
+    a set is logged. (SES-12, SES-13)
+
+D10. Export confirmation copy must not claim the file was saved or downloaded.
+     The app cannot observe that. (FB-8)
+
+D11. Log set must stay reachable while the iOS keyboard is open.
+     position: fixed; bottom alone does not satisfy this, even though it passes
+     the CI proxy. (LOG-3)
+
+D12. Record genuine specification silences in DECISIONS.md, and nothing else.
+
+D13. This is a one-shot iteration. No clarification will be provided.
+
+SCORING
+Sections P-U (35 points) and gate G13 from Amendment 005. Core is now 185
+points. Directions D1-D13 are scored separately as followed, not followed,
+misapplied, or not verifiable.
+
+DELIVERABLE
+A pull request, with CI green, in which every step of the core loop - author,
+paste, validate, import, activate, start, log a set, complete - produces an
+outcome the user can see without scrolling.
+```
