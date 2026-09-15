@@ -287,6 +287,8 @@ session from it can be logged with each set showing its own prescription.
 
 ### Iteration 6 — GPT-6 Astra — Amendment 005
 
+**Revised before handoff** to add clearing pasted input (CLR) at the owner\'s request. This version supersedes the first draft.
+
 Directives are numbered. Each is scored individually in the round's record (IT-6).
 
 ```
@@ -352,11 +354,16 @@ D11. Log set must stay reachable while the iOS keyboard is open.
 
 D12. Record genuine specification silences in DECISIONS.md, and nothing else.
 
-D13. This is a one-shot iteration. No clarification will be provided.
+D13. Add a Clear control for the paste field, with Undo and no confirmation
+     dialog. Clear only when the user presses it. Never clear the field
+     automatically after a validation failure - PAS-7 still holds.
+     (CLR-1 to CLR-7)
+
+D14. This is a one-shot iteration. No clarification will be provided.
 
 SCORING
-Sections P-U (35 points) and gate G13 from Amendment 005. Core is now 185
-points. Directions D1-D13 are scored separately as followed, not followed,
+Sections P-V (40 points) and gate G13 from Amendment 005. Core is now 190
+points. Directions D1-D14 are scored separately as followed, not followed,
 misapplied, or not verifiable.
 
 DELIVERABLE
