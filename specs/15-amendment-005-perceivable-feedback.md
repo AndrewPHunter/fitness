@@ -20,6 +20,11 @@ The rubric could not catch this, because nothing in it asked whether feedback wa
 The audit records 17 findings. This amendment addresses every P0, P1 and P2 finding except F-11's
 backup-staleness dimension, which remains EXT-9.
 
+**Owner addition, folded in before handoff.** §15.5 also specifies clearing pasted input (CLR),
+requested after the owner found that recovering from a parse error meant manually selecting an
+entire JSON document on a phone. It was added to this amendment rather than a new one because
+iteration 6 had not yet been handed off.
+
 **UX-8 is not withdrawn.** Screen-reader announcements remain required. They are necessary and no
 longer sufficient.
 
@@ -95,6 +100,29 @@ An element fixed to the bottom of the layout viewport can therefore sit behind t
 | VAL-3 | The error summary states the error count in a perceivable heading, with the list following |
 | VAL-4 | After **Import**, focus does **not** move to the paste field. It moves to the confirmation or to the next step |
 
+### Clearing pasted input — CLR
+
+After a parse error the only way to start again is to select the entire document by hand, which on
+a phone is slow and unreliable. The paste field needs a one-tap clear.
+
+| ID | Requirement |
+|---|---|
+| CLR-1 | A **Clear** control for the paste field is perceivable (§15.2) whenever the field is non-empty — including at the moment an error summary is shown after Validate (VAL-1). It is absent or disabled when the field is empty |
+| CLR-2 | One tap empties the field **and** all review state: errors, preview, and any code-fence notice (PAS-5) |
+| CLR-3 | There is **no confirmation dialog**. Instead a perceivable confirmation offers **Undo**, which restores the exact text as it was immediately before clearing. Undo remains available until the field is changed again or the user navigates away. No timer |
+| CLR-4 | Undo restores the **text only**. Validation state is not restored; the user validates again |
+| CLR-5 | After Clear, focus does **not** move into the paste field — on iOS that raises the keyboard over the screen (consistent with VAL-4). Focus moves to the confirmation |
+| CLR-6 | FB-1 to FB-6 apply: visible confirmation, screen-reader announcement retained, outcome copy (`Pasted JSON cleared`) |
+
+### CLR-7 — The app never clears the field on its own. This is a trap.
+
+[Amendment 002](12-amendment-002-paste-import.md) **PAS-7** still holds: *the pasted text is never
+cleared on validation failure*. Clearing happens **only** when the user presses Clear.
+
+A Clear control makes it tempting to empty the field automatically after an error "to save a tap".
+That would destroy the text the user needs in order to read the errors and correct it in place,
+and is a PAS-7 regression.
+
 ## 15.6 Next step and session control — NEXT, SES
 
 | ID | Requirement |
@@ -139,7 +167,7 @@ nor both together, checks perceivability.**
 | ID | Requirement |
 |---|---|
 | VER-1 | A committed helper, e.g. `expectPerceivable(locator)`, asserts every condition of §15.2 — including an explicit comparison against the top edge of the bottom navigation |
-| VER-2 | Every FB, LOG, VAL, NEXT and SES requirement is covered by an e2e test at 390 × 844 using that helper, with **no scripted scroll** between action and assertion |
+| VER-2 | Every FB, LOG, VAL, CLR, NEXT and SES requirement is covered by an e2e test at 390 × 844 using that helper, with **no scripted scroll** between action and assertion |
 | VER-3 | Those tests navigate through visible controls after the initial load, not by `page.goto` to deep routes |
 
 ### VER-4 — The helper must prove it rejects the failures. This is a trap.
@@ -211,7 +239,17 @@ If any of the three would pass, Section U scores zero.
 |---|---|---|
 | U1 | Helper checks every §15.2 condition, including navigation occlusion | 2 |
 | U2 | Helper's own tests prove it rejects all three failures (VER-4) | 3 |
-| U3 | Every FB/LOG/VAL/NEXT/SES requirement covered at 390 × 844, visible navigation, no scripted scroll | 2 |
+| U3 | Every FB/LOG/VAL/CLR/NEXT/SES requirement covered at 390 × 844, visible navigation, no scripted scroll | 2 |
+
+### V. Clearing pasted input — 5 pts
+
+| ID | Criterion | Pts |
+|---|---|---|
+| V1 | Clear perceivable whenever the field is non-empty, including in the error state | 1 |
+| V2 | One tap clears the text and all review state | 1 |
+| V3 | Undo restores the exact prior text; no confirmation dialog | 1 |
+| V4 | The field is never cleared automatically (CLR-7, PAS-7) | 1 |
+| V5 | Focus not moved into the field after Clear; covered by e2e using the helper | 1 |
 
 ### Deductions specific to this amendment
 
@@ -220,6 +258,7 @@ If any of the three would pass, Section U scores zero.
 | Discard offered for a session with logged sets (SES-13) | Section S scores 0, **and −15** (C3) |
 | Screen-reader live region removed (FB-3) | P4 scores 0, recorded as a UX-8 regression |
 | Export copy claims the file was saved (FB-8) | P2 scores 0, **and −10** (C1) |
+| Field cleared automatically after a validation failure (CLR-7) | Section V scores 0, recorded as a PAS-7 regression |
 | Palette tokens changed, or contrast check fails | VIS-6 regression per [iterations.md](../evaluation/iterations.md) IT-1 |
 
 ### Gate G13 — the core loop is perceivable
@@ -230,7 +269,7 @@ If any of the three would pass, Section U scores zero.
 
 ### Revised totals
 
-Core becomes **185 points**. Extended remains 26. Bands stay percentages of the applicable total.
+Core becomes **190 points**. Extended remains 26. Bands stay percentages of the applicable total.
 
 ## 15.11 Effect on recorded evaluations
 
