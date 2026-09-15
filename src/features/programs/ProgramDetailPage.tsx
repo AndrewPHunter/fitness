@@ -1,10 +1,12 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { entryPrescriptionSummary } from '../../domain/program/prescription';
+import { nextSession } from '../../domain/schedule/nextSession';
 import type { AppStore } from '../../domain/state/appStore';
 import { Badge } from '../../ui/atoms/Badge';
 import { Button } from '../../ui/atoms/Button';
 
 export function ProgramDetailPage({ store }: { store: AppStore }) {
+  const navigate = useNavigate();
   const { programId, version } = useParams();
   const program = store.data.programs.find(
     (stored) =>
@@ -25,6 +27,17 @@ export function ProgramDetailPage({ store }: { store: AppStore }) {
   const active =
     store.data.activeProgram?.programId === program.programId &&
     store.data.activeProgram.version === program.version;
+  const completed = store.data.sessionLogs.filter(
+    (log) =>
+      log.programId === program.programId &&
+      log.programVersion === program.version &&
+      log.completedAt !== null,
+  ).length;
+  const next = nextSession(program, completed, store.now(), store.timezone()).session;
+  const start = () => {
+    const result = store.startSession(next.sessionId);
+    if (result.ok) navigate('/session/active', { state: { preserveFeedback: true } });
+  };
   return (
     <main className="page">
       <header className="page-header">
@@ -36,14 +49,14 @@ export function ProgramDetailPage({ store }: { store: AppStore }) {
           {program.name} <span className="muted">v{program.version}</span>
         </h1>
         {program.description ? <p className="muted">{program.description}</p> : null}
-        <div>
-          <Button
-            variant={active ? 'ghost' : 'primary'}
-            disabled={active}
-            onClick={() => store.activateProgram(program.programId, program.version)}
-          >
-            {active ? 'Currently active' : 'Activate version'}
-          </Button>
+        <div className="cluster">
+          {active ? (
+            <Button onClick={start}>Start {next.name}</Button>
+          ) : (
+            <Button onClick={() => store.activateProgram(program.programId, program.version)}>
+              Activate version
+            </Button>
+          )}
         </div>
       </header>
       <section className="stack">

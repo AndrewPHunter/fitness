@@ -60,6 +60,7 @@ export function ExerciseHistoryPage({ store }: { store: AppStore }) {
       (rpeValue !== null &&
         (!(rpeValue >= 1 && rpeValue <= 10) || rpeValue * 2 !== Math.round(rpeValue * 2)))
     ) {
+      store.clearMessages();
       setInputError(
         'Enter a weight above 0, whole-number reps of 0 or more, and optional RPE from 1–10 in 0.5 steps.',
       );

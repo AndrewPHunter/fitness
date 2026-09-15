@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { prepareProgramText } from '../../domain/program/prepareProgramText';
 import type { Program, StoredProgram, ValidationError } from '../../domain/program/types';
 import { duplicateProgramError, validateProgramText } from '../../domain/program/validateProgram';
+import { nextSession } from '../../domain/schedule/nextSession';
 import type { AppStore } from '../../domain/state/appStore';
 import { readTextFile } from '../../platform/files/files';
 import { Badge } from '../../ui/atoms/Badge';
@@ -17,12 +18,18 @@ interface Preview {
 
 export function ProgramsPage({ store }: { store: AppStore }) {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const pasteField = useRef<HTMLTextAreaElement>(null);
+  const resultHeading = useRef<HTMLHeadingElement>(null);
+  const importHeading = useRef<HTMLHeadingElement>(null);
+  const clearConfirmation = useRef<HTMLElement>(null);
   const [programText, setProgramText] = useState('');
   const [errors, setErrors] = useState<ValidationError[]>([]);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [fencedText, setFencedText] = useState<string | null>(null);
   const [editNotice, setEditNotice] = useState('');
+  const [imported, setImported] = useState<Program | null>(null);
+  const [clearedText, setClearedText] = useState<string | null>(null);
   const [reading, setReading] = useState(false);
   const directPaste = searchParams.get('paste') === '1';
   const knownIds = new Set(
@@ -36,14 +43,25 @@ export function ProgramsPage({ store }: { store: AppStore }) {
     pasteField.current?.focus();
   }, [directPaste]);
 
+  useEffect(() => {
+    if (errors.length === 0 && !preview) return;
+    const frame = requestAnimationFrame(() => {
+      resultHeading.current?.scrollIntoView({ block: 'start' });
+      resultHeading.current?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [errors, preview]);
+
   const clearReview = () => {
     setErrors([]);
     setPreview(null);
     setFencedText(null);
     setEditNotice('');
+    setImported(null);
   };
 
   const reviewProgramText = (text: string) => {
+    store.clearMessages();
     clearReview();
     const prepared = prepareProgramText(text);
     if (prepared.kind === 'empty') {
@@ -98,12 +116,31 @@ export function ProgramsPage({ store }: { store: AppStore }) {
   };
 
   const updateProgramText = (text: string) => {
+    store.clearMessages();
     setProgramText(text);
+    setClearedText(null);
+    clearReview();
+  };
+
+  const clearPastedText = () => {
+    if (programText === '') return;
+    store.clearMessages();
+    setClearedText(programText);
+    setProgramText('');
+    clearReview();
+    requestAnimationFrame(() => clearConfirmation.current?.focus({ preventScroll: true }));
+  };
+
+  const undoClear = () => {
+    if (clearedText === null) return;
+    setProgramText(clearedText);
+    setClearedText(null);
     clearReview();
   };
 
   const removeCodeFences = () => {
     if (fencedText === null) return;
+    store.clearMessages();
     setProgramText(fencedText);
     setErrors([]);
     setPreview(null);
@@ -116,6 +153,8 @@ export function ProgramsPage({ store }: { store: AppStore }) {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
+    store.clearMessages();
+    setClearedText(null);
     setReading(true);
     clearReview();
     try {
@@ -140,9 +179,28 @@ export function ProgramsPage({ store }: { store: AppStore }) {
     if (!preview) return;
     const result = store.addProgram(preview.program);
     if (result.ok) {
+      setImported(preview.program);
       setPreview(null);
-      setProgramText('');
+      requestAnimationFrame(() => importHeading.current?.focus({ preventScroll: true }));
     }
+  };
+
+  const nextFor = (program: Program) => {
+    const completed = store.data.sessionLogs.filter(
+      (log) =>
+        log.programId === program.programId &&
+        log.programVersion === program.version &&
+        log.completedAt !== null,
+    ).length;
+    return nextSession(program, completed, store.now(), store.timezone()).session;
+  };
+
+  const activate = (program: Program) => store.activateProgram(program.programId, program.version);
+
+  const start = (program: Program) => {
+    const session = nextFor(program);
+    const result = store.startSession(session.sessionId);
+    if (result.ok) navigate('/session/active', { state: { preserveFeedback: true } });
   };
 
   const groups = new Map<string, StoredProgram[]>();
@@ -186,9 +244,9 @@ export function ProgramsPage({ store }: { store: AppStore }) {
             Nothing is stored until validation passes and you press Import program.
           </span>
         </label>
-        <Button wide onClick={() => reviewProgramText(programText)}>
-          Validate pasted JSON
-        </Button>
+        <div className="paste-actions">
+          <Button onClick={() => reviewProgramText(programText)}>Validate pasted JSON</Button>
+        </div>
         {editNotice ? (
           <p className="action-feedback action-feedback-success" role="status">
             <span className="state-symbol" aria-hidden="true">
@@ -230,6 +288,8 @@ export function ProgramsPage({ store }: { store: AppStore }) {
         <ErrorPanel
           title={`${errors.length} problem${errors.length === 1 ? '' : 's'} found — program rejected`}
           errors={errors}
+          headingRef={resultHeading}
+          headingTabIndex={-1}
           actions={
             fencedText !== null ? (
               <Button variant="secondary" onClick={removeCodeFences}>
@@ -241,11 +301,14 @@ export function ProgramsPage({ store }: { store: AppStore }) {
       ) : null}
       {preview ? (
         <section className="surface stack" aria-live="polite">
-          <div>
-            <p className="eyebrow">Ready to import</p>
-            <h2>
-              {preview.program.name} <span className="muted">v{preview.program.version}</span>
-            </h2>
+          <div className="spread result-heading-row">
+            <div>
+              <p className="eyebrow">Ready to import</p>
+              <h2 ref={resultHeading} tabIndex={-1}>
+                {preview.program.name} <span className="muted">v{preview.program.version}</span>
+              </h2>
+            </div>
+            <Button onClick={savePreview}>Import program</Button>
           </div>
           <ul className="summary-list">
             <li>
@@ -280,10 +343,27 @@ export function ProgramsPage({ store }: { store: AppStore }) {
             </div>
           </div>
           <div className="cluster">
-            <Button onClick={savePreview}>Import program</Button>
             <Button variant="ghost" onClick={() => setPreview(null)}>
               Cancel
             </Button>
+          </div>
+        </section>
+      ) : null}
+      {imported ? (
+        <section className="surface stack import-confirmation" aria-labelledby="imported-title">
+          <div>
+            <p className="eyebrow">Import complete</p>
+            <h2 id="imported-title" ref={importHeading} tabIndex={-1}>
+              {imported.name} v{imported.version} imported
+            </h2>
+          </div>
+          <div className="cluster">
+            {store.data.activeProgram?.programId === imported.programId &&
+            store.data.activeProgram.version === imported.version ? (
+              <Button onClick={() => start(imported)}>Start {nextFor(imported).name}</Button>
+            ) : (
+              <Button onClick={() => activate(imported)}>Activate {imported.name}</Button>
+            )}
           </div>
         </section>
       ) : null}
@@ -312,6 +392,9 @@ export function ProgramsPage({ store }: { store: AppStore }) {
                   const active =
                     activeProgram?.programId === program.programId &&
                     activeProgram?.version === program.version;
+                  const handledByImportConfirmation =
+                    imported?.programId === program.programId &&
+                    imported.version === program.version;
                   return (
                     <div className="program-row" key={program.version}>
                       <div className="stack">
@@ -323,11 +406,12 @@ export function ProgramsPage({ store }: { store: AppStore }) {
                           View {program.sessions.length} sessions
                         </Link>
                       </div>
-                      {active ? null : (
-                        <Button
-                          variant="secondary"
-                          onClick={() => store.activateProgram(program.programId, program.version)}
-                        >
+                      {handledByImportConfirmation ? null : active ? (
+                        <Button onClick={() => start(program)}>
+                          Start {nextFor(program).name}
+                        </Button>
+                      ) : (
+                        <Button variant="secondary" onClick={() => activate(program)}>
                           Activate
                         </Button>
                       )}
@@ -339,6 +423,31 @@ export function ProgramsPage({ store }: { store: AppStore }) {
           </div>
         )}
       </section>
+      {clearedText !== null ? (
+        <aside
+          className="global-feedback global-feedback-success clear-feedback"
+          role="status"
+          tabIndex={-1}
+          ref={clearConfirmation}
+        >
+          <span className="state-symbol" aria-hidden="true">
+            ✓
+          </span>
+          <p>Pasted JSON cleared</p>
+          <Button variant="secondary" onClick={undoClear}>
+            Undo
+          </Button>
+        </aside>
+      ) : null}
+      {programText !== '' ? (
+        <Button
+          className={`paste-clear-floating${store.failure ? ' paste-clear-floating-failure' : store.notice ? ' paste-clear-floating-notice' : ''}`}
+          variant="secondary"
+          onClick={clearPastedText}
+        >
+          Clear pasted JSON
+        </Button>
+      ) : null}
     </main>
   );
 }

@@ -88,7 +88,10 @@ export function AuthorPage({
   const downloadFile = (content: string, filename: string, type: string) => {
     try {
       download(content, filename, type);
-      setDownloadFeedback({ state: 'success', message: `Downloaded ${filename}.` });
+      setDownloadFeedback({
+        state: 'success',
+        message: `Prepared ${filename} — check that it saved.`,
+      });
     } catch (error: unknown) {
       setDownloadFeedback({
         state: 'failure',
@@ -122,6 +125,9 @@ export function AuthorPage({
           {promptFeedback.state === 'working' ? 'Copying…' : 'Copy personalized prompt'}
         </Button>
         <FeedbackMessage feedback={promptFeedback} />
+        <Link className="button button-secondary" to="/programs?paste=1">
+          Paste JSON in Programs
+        </Link>
         {!personalized.ok ? (
           <div className="author-integrity-error" role="alert">
             <strong>Personalization unavailable</strong>

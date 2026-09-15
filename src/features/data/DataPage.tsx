@@ -28,42 +28,40 @@ export function DataPage({ store }: { store: AppStore }) {
   const exportJson = () => {
     try {
       const now = store.now();
-      downloadText(
-        toExportJson(store.data, now),
-        `fitness-export-${now.slice(0, 10)}.json`,
-        'application/json',
-      );
+      const filename = `fitness-export-${now.slice(0, 10)}.json`;
+      downloadText(toExportJson(store.data, now), filename, 'application/json');
+      store.announce(`Prepared ${filename} — check that it saved.`);
     } catch (error: unknown) {
+      const detail =
+        error instanceof Error ? error.message : 'The browser could not create the backup.';
       setErrors([
         {
           layer: 'storage',
           code: 'JSON_EXPORT_FAILED',
           path: '',
-          message:
-            error instanceof Error ? error.message : 'The browser could not create the backup.',
+          message: detail,
         },
       ]);
+      store.reportFailure(`JSON export failed. ${detail}`);
     }
   };
   const exportCsv = () => {
     try {
-      downloadText(
-        toCsv(store.data),
-        `fitness-history-${store.now().slice(0, 10)}.csv`,
-        'text/csv;charset=utf-8',
-      );
+      const filename = `fitness-history-${store.now().slice(0, 10)}.csv`;
+      downloadText(toCsv(store.data), filename, 'text/csv;charset=utf-8');
+      store.announce(`Prepared ${filename} — check that it saved.`);
     } catch (error: unknown) {
+      const detail =
+        error instanceof Error ? error.message : 'Historical prescription could not be resolved.';
       setErrors([
         {
           layer: 'storage',
           code: 'CSV_EXPORT_FAILED',
           path: '',
-          message:
-            error instanceof Error
-              ? error.message
-              : 'Historical prescription could not be resolved.',
+          message: detail,
         },
       ]);
+      store.reportFailure(`CSV export failed. ${detail}`);
     }
   };
   const chooseBackup = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -91,8 +89,12 @@ export function DataPage({ store }: { store: AppStore }) {
   const merge = () => {
     if (!backup) return;
     const result = store.mergeData(backup.data);
-    if (result.conflicts.length > 0) setConflicts(result.conflicts);
-    else if (result.result.ok) setBackup(null);
+    if (result.conflicts.length > 0) {
+      setConflicts(result.conflicts);
+      store.reportFailure(
+        `Backup merge failed · ${result.conflicts.length} conflict${result.conflicts.length === 1 ? '' : 's'} found. Nothing was changed.`,
+      );
+    } else if (result.result.ok) setBackup(null);
   };
   const replace = () => {
     if (!backup) return;

@@ -55,13 +55,19 @@ export function HistoryPage({ store }: { store: AppStore }) {
                   <p className="exercise-id">{exerciseId}</p>
                 </div>
                 {latest ? (
-                  <p>
-                    Last:{' '}
-                    <strong>
-                      {formatLoad(latest.weight)} × {latest.reps}
-                    </strong>
-                    <br />
-                    <span className="muted">{new Date(latest.loggedAt).toLocaleDateString()}</span>
+                  <p
+                    aria-label={`Last: ${formatLoad(latest.weight)} × ${latest.reps}, ${new Date(latest.loggedAt).toLocaleDateString()}`}
+                  >
+                    <span aria-hidden="true">
+                      Last:{' '}
+                      <strong>
+                        {formatLoad(latest.weight)} × {latest.reps}
+                      </strong>
+                      <br />
+                      <span className="muted">
+                        {new Date(latest.loggedAt).toLocaleDateString()}
+                      </span>
+                    </span>
                   </p>
                 ) : null}
                 <div className="stat-row">

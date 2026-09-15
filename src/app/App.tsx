@@ -1,5 +1,5 @@
-import { useEffect, useMemo } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { DataPage } from '../features/data/DataPage';
 import { AuthorPage } from '../features/authoring/AuthorPage';
 import { ExerciseHistoryPage } from '../features/history/ExerciseHistoryPage';
@@ -20,6 +20,60 @@ import { AppShell } from '../ui/templates/AppShell';
 import { usePersistedStore } from './PersistedProvider';
 
 const pwaAdapter = createBrowserPwaAdapter();
+
+function ActionFeedback({
+  store,
+}: {
+  store: NonNullable<ReturnType<typeof usePersistedStore>['store']>;
+}) {
+  const location = useLocation();
+  const previousLocation = useRef(location.key);
+
+  useLayoutEffect(() => {
+    window.scrollTo({ left: 0, top: 0 });
+  }, [location.key]);
+
+  useEffect(() => {
+    if (previousLocation.current !== location.key) {
+      const state = location.state as { preserveFeedback?: boolean } | null;
+      if (!state?.preserveFeedback) store.clearMessages();
+    }
+    previousLocation.current = location.key;
+  }, [location.key, location.state, store]);
+
+  return (
+    <>
+      <div className="visually-hidden" aria-live="polite">
+        {store.notice}
+      </div>
+      {store.notice ? (
+        <aside className="global-feedback global-feedback-success" aria-hidden="true">
+          <span className="state-symbol">✓</span>
+          <p>{store.notice}</p>
+        </aside>
+      ) : null}
+      {store.failure ? (
+        <aside className="global-feedback global-feedback-failure" role="alert">
+          <span className="state-symbol" aria-hidden="true">
+            !
+          </span>
+          <div className="stack">
+            <strong>Action failed</strong>
+            <p>{store.failure}</p>
+            <div className="cluster">
+              <a className="button button-secondary" href="#/data">
+                Open Data & backup
+              </a>
+              <Button variant="ghost" onClick={store.clearMessages}>
+                Dismiss
+              </Button>
+            </div>
+          </div>
+        </aside>
+      ) : null}
+    </>
+  );
+}
 
 export function App() {
   const { store, fatal } = usePersistedStore();
@@ -91,23 +145,7 @@ export function App() {
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      <div className="visually-hidden" aria-live="polite">
-        {store.notice}
-      </div>
-      {store.failure ? (
-        <aside className="global-alert" role="alert">
-          <strong>Save failed</strong>
-          <p>{store.failure}</p>
-          <div className="cluster">
-            <a className="button button-secondary" href="#/data">
-              Open Data & backup
-            </a>
-            <Button variant="ghost" onClick={store.clearMessages}>
-              Dismiss
-            </Button>
-          </div>
-        </aside>
-      ) : null}
+      <ActionFeedback store={store} />
     </AppShell>
   );
 }
