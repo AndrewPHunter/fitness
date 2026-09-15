@@ -203,6 +203,7 @@ test('empty sessions discard, while logged sessions only leave and keep their se
   );
 
   await page.getByRole('link', { name: 'History', exact: true }).click();
+  await page.getByRole('button', { name: 'Exercises' }).click();
   const historyLink = page.getByRole('link', {
     name: /Back Squat.*Last: 82\.5 kg × 5, /u,
   });
@@ -255,7 +256,7 @@ test('settings, exports, restore and merge confirm honestly and clear on navigat
   await page.waitForTimeout(4100);
   await expectPerceivable(settingsNotice);
 
-  await page.getByRole('link', { name: 'Data', exact: true }).click();
+  await page.getByRole('link', { name: 'Backup', exact: true }).click();
   await expect(page.locator('.global-feedback-success')).toHaveCount(0);
   const jsonDownload = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export JSON backup' }).click();

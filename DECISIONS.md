@@ -14,6 +14,15 @@
   one pinned confirmation above the bottom navigation so the same pattern remains perceivable
   before and after an action-driven route change. A later unrelated route change clears it; a newer
   action replaces it.
+- **Skipping an exercise resolves only that workout's remaining sets:** A skip is stored against
+  the exercise entry's block and entry position in the active session, so repeated exercise IDs
+  remain distinct. Any sets already logged for that entry stay sacred. Skipping makes the
+  remaining sets eligible for session completion, and **Include again** restores them before the
+  workout is completed.
+- **Authored order is the default, not a lock:** With no user selection, logging follows the
+  program's block order and superset round-robin order. Choosing an exercise temporarily selects
+  its next unlogged set; after that exercise is finished, the default order resumes. This keeps
+  authored structure visible while allowing the user to work around equipment and availability.
 - **Observed frequency event:** An exercise counts once on a calendar date if at least one set was
   logged for it that day. Multiple sets in the same workout do not inflate training frequency.
 - **Import merge ordering:** Successful merges preserve current program/log order and append

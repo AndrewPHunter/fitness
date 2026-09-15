@@ -14,6 +14,12 @@ export interface LogSetInput {
   rpe: number | null;
 }
 
+export interface ExercisePosition {
+  exerciseId: string;
+  blockIndex: number;
+  entryIndex: number;
+}
+
 export interface AppStore {
   data: PersistedRoot;
   notice: string;
@@ -25,6 +31,8 @@ export interface AppStore {
   activateProgram(programId: string, version: number): ActionResult;
   startSession(sessionId: string): ActionResult;
   logSet(input: LogSetInput): ActionResult;
+  skipExercise(sessionLogId: string, position: ExercisePosition): ActionResult;
+  restoreExercise(sessionLogId: string, position: ExercisePosition): ActionResult;
   updateSet(
     sessionLogId: string,
     setLogId: string,

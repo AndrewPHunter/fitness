@@ -46,3 +46,7 @@ export function plannedSetKey(
 ): string {
   return `${set.blockIndex}:${set.entryIndex}:${set.setIndex}`;
 }
+
+export function plannedEntryKey(entry: Pick<PlannedSet, 'blockIndex' | 'entryIndex'>): string {
+  return `${entry.blockIndex}:${entry.entryIndex}`;
+}

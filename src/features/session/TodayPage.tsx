@@ -115,7 +115,11 @@ export function TodayPage({ store }: { store: AppStore }) {
             <p>Started {new Date(activeLog.startedAt).toLocaleString()}</p>
           </div>
           <Link className="button button-primary" to="/session/active">
-            Resume · {activeLog.setLogs.length} sets saved
+            Resume · {activeLog.setLogs.length} set{activeLog.setLogs.length === 1 ? '' : 's'}{' '}
+            logged
+            {activeLog.skippedExercises.length > 0
+              ? ` · ${activeLog.skippedExercises.length} skipped`
+              : ''}
           </Link>
         </section>
       ) : (

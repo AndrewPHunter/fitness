@@ -1,5 +1,10 @@
-import type { SetLog } from '../program/types';
-import { lastLoggedWeight, observedFrequency, prefillWeight } from './history';
+import type { SessionLog, SetLog } from '../program/types';
+import {
+  lastLoggedWeight,
+  observedFrequency,
+  prefillWeight,
+  previousExerciseSession,
+} from './history';
 
 function set(setLogId: string, exerciseId: string, loggedAt: string, value: number): SetLog {
   return {
@@ -48,6 +53,38 @@ describe('history calculations', () => {
 
   it('returns an empty prefill when both history and target are absent', () => {
     expect(prefillWeight([], 'squat')).toBeNull();
+  });
+
+  it('returns the latest prior workout as one ordered set group', () => {
+    const session = (sessionLogId: string, startedAt: string, sets: SetLog[]): SessionLog => ({
+      sessionLogId,
+      programId: 'program',
+      programVersion: 1,
+      sessionId: 'day',
+      startedAt,
+      completedAt: `${startedAt.slice(0, 11)}11:00:00-07:00`,
+      setLogs: sets,
+      skippedExercises: [],
+    });
+    const result = previousExerciseSession(
+      [
+        session('older', '2026-09-01T10:00:00-07:00', [
+          set('older-set', 'squat', '2026-09-01T10:05:00-07:00', 90),
+        ]),
+        session('latest', '2026-09-08T10:00:00-07:00', [
+          { ...set('second', 'squat', '2026-09-08T10:10:00-07:00', 102.5), setIndex: 1 },
+          set('first', 'squat', '2026-09-08T10:05:00-07:00', 100),
+          set('bench', 'bench', '2026-09-08T10:15:00-07:00', 70),
+        ]),
+        session('current', '2026-09-10T10:00:00-07:00', [
+          set('current-set', 'squat', '2026-09-10T10:05:00-07:00', 105),
+        ]),
+      ],
+      'squat',
+      'current',
+    );
+    expect(result?.sessionLogId).toBe('latest');
+    expect(result?.sets.map((entry) => entry.setLogId)).toEqual(['first', 'second']);
   });
 
   it('counts unique calendar dates inside 7- and 14-day inclusive-today windows', () => {

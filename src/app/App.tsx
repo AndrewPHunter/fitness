@@ -62,7 +62,7 @@ function ActionFeedback({
             <p>{store.failure}</p>
             <div className="cluster">
               <a className="button button-secondary" href="#/data">
-                Open Data & backup
+                Open Backup
               </a>
               <Button variant="ghost" onClick={store.clearMessages}>
                 Dismiss

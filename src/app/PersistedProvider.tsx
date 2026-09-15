@@ -3,6 +3,7 @@ import { mergePersistedRoots } from '../domain/export/merge';
 import type { AppStore, LogSetInput } from '../domain/state/appStore';
 import type { PersistedRoot, Program, Settings } from '../domain/program/types';
 import { isValidActual } from '../domain/session/actualSet';
+import { plannedEntryKey, plannedSetKey, plannedSets } from '../domain/session/plannedSets';
 import type { Clock } from '../platform/clock/Clock';
 import type { IdProvider } from '../platform/ids/IdProvider';
 import type { LoadResult, StorageAdapter, WriteResult } from '../platform/storage/StorageAdapter';
@@ -110,6 +111,7 @@ export function PersistedProvider({
           startedAt: clock.now(),
           completedAt: null,
           setLogs: [],
+          skippedExercises: [],
         };
         const activeProgram = data.programs.find(
           ({ program }) =>
@@ -137,6 +139,16 @@ export function PersistedProvider({
           return reject(
             `Set ${input.setIndex + 1} logging`,
             'The active session could not be found.',
+          );
+        if (
+          session.skippedExercises.some(
+            (skipped) =>
+              skipped.blockIndex === input.blockIndex && skipped.entryIndex === input.entryIndex,
+          )
+        )
+          return reject(
+            `Set ${input.setIndex + 1} logging`,
+            'That exercise is skipped for this workout. Include it again before logging a set.',
           );
         if (
           session.setLogs.some(
@@ -174,6 +186,93 @@ export function PersistedProvider({
           next,
           `Set ${input.setIndex + 1} · ${input.weight.value} ${input.weight.unit} × ${input.reps}${rpe} was not logged.`,
           `Set ${input.setIndex + 1} logged · ${input.weight.value} ${input.weight.unit} × ${input.reps}${rpe}`,
+        );
+      },
+      skipExercise: (sessionLogId, position) => {
+        const sessionLog = data.sessionLogs.find((log) => log.sessionLogId === sessionLogId);
+        if (!sessionLog || sessionLog.completedAt !== null)
+          return reject('Exercise skip', 'The active session could not be found.');
+        const program = data.programs.find(
+          ({ program: candidate }) =>
+            candidate.programId === sessionLog.programId &&
+            candidate.version === sessionLog.programVersion,
+        )?.program;
+        const session = program?.sessions.find(
+          (candidate) => candidate.sessionId === sessionLog.sessionId,
+        );
+        const block = session?.blocks[position.blockIndex];
+        const entry =
+          block?.type === 'single'
+            ? position.entryIndex === 0
+              ? block.entry
+              : undefined
+            : block?.entries[position.entryIndex];
+        if (!entry || entry.exerciseId !== position.exerciseId)
+          return reject('Exercise skip', 'That exercise is not in this session prescription.');
+        const name =
+          program?.exercises.find((exercise) => exercise.exerciseId === position.exerciseId)
+            ?.name ?? position.exerciseId;
+        if (
+          sessionLog.skippedExercises.some(
+            (skipped) => plannedEntryKey(skipped) === plannedEntryKey(position),
+          )
+        )
+          return reject('Exercise skip', `${name} is already skipped for this workout.`);
+        const loggedCount = sessionLog.setLogs.filter(
+          (setLog) => plannedEntryKey(setLog) === plannedEntryKey(position),
+        ).length;
+        return commit(
+          {
+            ...data,
+            sessionLogs: data.sessionLogs.map((log) =>
+              log.sessionLogId === sessionLogId
+                ? {
+                    ...log,
+                    skippedExercises: [
+                      ...log.skippedExercises,
+                      { ...position, skippedAt: clock.now() },
+                    ],
+                  }
+                : log,
+            ),
+          },
+          `${name} was not skipped.`,
+          `${name} skipped for this workout${loggedCount > 0 ? ` · ${loggedCount} logged set${loggedCount === 1 ? '' : 's'} kept` : ''}.`,
+        );
+      },
+      restoreExercise: (sessionLogId, position) => {
+        const sessionLog = data.sessionLogs.find((log) => log.sessionLogId === sessionLogId);
+        if (!sessionLog || sessionLog.completedAt !== null)
+          return reject('Exercise restore', 'The active session could not be found.');
+        const exists = sessionLog.skippedExercises.some(
+          (skipped) => plannedEntryKey(skipped) === plannedEntryKey(position),
+        );
+        if (!exists)
+          return reject('Exercise restore', 'That exercise is not skipped for this workout.');
+        const program = data.programs.find(
+          ({ program: candidate }) =>
+            candidate.programId === sessionLog.programId &&
+            candidate.version === sessionLog.programVersion,
+        )?.program;
+        const name =
+          program?.exercises.find((exercise) => exercise.exerciseId === position.exerciseId)
+            ?.name ?? position.exerciseId;
+        return commit(
+          {
+            ...data,
+            sessionLogs: data.sessionLogs.map((log) =>
+              log.sessionLogId === sessionLogId
+                ? {
+                    ...log,
+                    skippedExercises: log.skippedExercises.filter(
+                      (skipped) => plannedEntryKey(skipped) !== plannedEntryKey(position),
+                    ),
+                  }
+                : log,
+            ),
+          },
+          `${name} was not returned to this workout.`,
+          `${name} is back in this workout.`,
         );
       },
       updateSet: (sessionLogId, setLogId, weight, reps, rpe) => {
@@ -224,11 +323,28 @@ export function PersistedProvider({
       },
       completeSession: (sessionLogId) => {
         const completedLog = data.sessionLogs.find((log) => log.sessionLogId === sessionLogId);
+        if (!completedLog || completedLog.completedAt !== null)
+          return reject('Session completion', 'The active session could not be found.');
         const program = data.programs.find(
           ({ program: candidate }) =>
             candidate.programId === completedLog?.programId &&
             candidate.version === completedLog.programVersion,
         )?.program;
+        const session = program?.sessions.find(
+          (candidate) => candidate.sessionId === completedLog.sessionId,
+        );
+        if (!session)
+          return reject('Session completion', 'The session prescription could not be found.');
+        const loggedKeys = new Set(completedLog.setLogs.map(plannedSetKey));
+        const skippedKeys = new Set(completedLog.skippedExercises.map(plannedEntryKey));
+        const unresolved = plannedSets(session).filter(
+          (task) => !loggedKeys.has(plannedSetKey(task)) && !skippedKeys.has(plannedEntryKey(task)),
+        );
+        if (unresolved.length > 0)
+          return reject(
+            'Session completion',
+            `${unresolved.length} prescribed set${unresolved.length === 1 ? ' is' : 's are'} still unresolved. Log the set or skip its exercise for this workout.`,
+          );
         const sessionName =
           program?.sessions.find((session) => session.sessionId === completedLog?.sessionId)
             ?.name ??
@@ -242,7 +358,7 @@ export function PersistedProvider({
             ),
           },
           `${sessionName} was not completed.`,
-          `${sessionName} completed · ${completedLog?.setLogs.length ?? 0} sets logged.`,
+          `${sessionName} completed · ${completedLog.setLogs.length} set${completedLog.setLogs.length === 1 ? '' : 's'} logged${completedLog.skippedExercises.length > 0 ? ` · ${completedLog.skippedExercises.length} exercise${completedLog.skippedExercises.length === 1 ? '' : 's'} skipped` : ''}.`,
         );
       },
       discardSession: (sessionLogId) => {

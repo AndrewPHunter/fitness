@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "programs": [
+    {
+      "program": {
+        "programId": "migration-program",
+        "version": 1,
+        "name": "Migration Program",
+        "exercises": [{ "exerciseId": "back-squat", "name": "Back Squat" }],
+        "sessions": [
+          {
+            "sessionId": "training-day",
+            "name": "Training Day",
+            "blocks": [
+              {
+                "type": "single",
+                "entry": { "exerciseId": "back-squat", "sets": 1, "reps": 5 }
+              }
+            ]
+          }
+        ],
+        "schedule": { "mode": "rotation", "sequence": ["training-day"] }
+      },
+      "importedAt": "2026-09-01T09:00:00-07:00"
+    }
+  ],
+  "sessionLogs": [
+    {
+      "sessionLogId": "existing-session",
+      "programId": "migration-program",
+      "programVersion": 1,
+      "sessionId": "training-day",
+      "startedAt": "2026-09-01T10:00:00-07:00",
+      "completedAt": null,
+      "setLogs": []
+    }
+  ],
+  "settings": {
+    "defaultUnit": "kg",
+    "theme": "system"
+  },
+  "activeProgram": { "programId": "migration-program", "version": 1 }
+}

@@ -56,6 +56,7 @@ function activeRoot(previous: SessionLog[] = []): PersistedRoot {
         startedAt: '2026-09-10T10:00:00-07:00',
         completedAt: null,
         setLogs: [],
+        skippedExercises: [],
       },
     ],
   };
@@ -78,6 +79,7 @@ function activeFixtureRoot(): PersistedRoot {
         startedAt: '2026-09-13T10:05:00-07:00',
         completedAt: null,
         setLogs: [],
+        skippedExercises: [],
       },
     ],
   };
@@ -103,12 +105,51 @@ function renderApp(root: PersistedRoot) {
 it('drives a superset in round-robin component order', async () => {
   const user = userEvent.setup();
   renderApp(activeRoot());
-  expect(screen.getByRole('heading', { name: 'Movement A' })).toBeVisible();
+  expect(screen.getByRole('heading', { level: 2, name: 'Movement A' })).toBeVisible();
   await user.click(screen.getByRole('button', { name: 'Log set' }));
-  expect(screen.getByRole('heading', { name: 'Movement B' })).toBeVisible();
+  expect(screen.getByRole('heading', { level: 2, name: 'Movement B' })).toBeVisible();
   await user.click(screen.getByRole('button', { name: 'Log set' }));
-  expect(screen.getByRole('heading', { name: 'Movement A' })).toBeVisible();
+  expect(screen.getByRole('heading', { level: 2, name: 'Movement A' })).toBeVisible();
   expect(screen.getByText('Superset · movement 1')).toBeVisible();
+});
+
+it('lets the user switch exercises without losing the authored default order', async () => {
+  const user = userEvent.setup();
+  renderApp(activeRoot());
+  await user.click(screen.getByRole('button', { name: 'Switch' }));
+  expect(screen.getByRole('dialog', { name: 'Choose an exercise' })).toBeVisible();
+  await user.click(screen.getByRole('button', { name: /Movement B.*0 of 2 sets logged.*Choose/u }));
+  expect(screen.getByRole('heading', { level: 2, name: 'Movement B' })).toBeVisible();
+  expect(screen.getByText('Set 1 of 2 · 6 reps')).toBeVisible();
+  await user.click(screen.getByRole('button', { name: 'Log set' }));
+  expect(screen.getByRole('heading', { level: 2, name: 'Movement B' })).toBeVisible();
+  expect(screen.getByText('Set 2 of 2 · 6 reps')).toBeVisible();
+});
+
+it('completes a workout after one exercise is explicitly skipped', async () => {
+  const user = userEvent.setup();
+  const adapter = renderApp(activeRoot());
+  await user.click(screen.getByRole('button', { name: 'Skip Movement A for this workout' }));
+  expect(screen.getByRole('heading', { level: 2, name: 'Movement B' })).toBeVisible();
+  expect(screen.getByText('Skipped for this workout')).toBeVisible();
+  await user.click(screen.getByRole('button', { name: 'Include' }));
+  expect(screen.getByRole('heading', { level: 2, name: 'Movement A' })).toBeVisible();
+  await user.click(screen.getByRole('button', { name: 'Skip Movement A for this workout' }));
+  await user.click(screen.getByRole('button', { name: 'Log set' }));
+  await user.click(screen.getByRole('button', { name: 'Log set' }));
+  expect(screen.getByRole('heading', { name: 'Session ready to complete' })).toBeVisible();
+  await user.click(screen.getByRole('button', { name: 'Complete session' }));
+  const raw = adapter.raw();
+  const saved: unknown = raw ? JSON.parse(raw) : null;
+  expect(saved).toMatchObject({
+    sessionLogs: [
+      {
+        completedAt: '2026-09-10T10:30:00-07:00',
+        skippedExercises: [{ exerciseId: 'movement-a', blockIndex: 0, entryIndex: 0 }],
+        setLogs: [{ exerciseId: 'movement-b' }, { exerciseId: 'movement-b' }],
+      },
+    ],
+  });
 });
 
 it('shows a prior weight prefill without persisting it before confirmation', () => {
@@ -119,6 +160,7 @@ it('shows a prior weight prefill without persisting it before confirmation', () 
     sessionId: 'superset-day',
     startedAt: '2026-09-01T10:00:00-07:00',
     completedAt: '2026-09-01T11:00:00-07:00',
+    skippedExercises: [],
     setLogs: [
       {
         setLogId: 'prior-set',
@@ -135,6 +177,10 @@ it('shows a prior weight prefill without persisting it before confirmation', () 
   };
   const adapter = renderApp(activeRoot([prior]));
   expect(screen.getByLabelText('Weight (lb)')).toHaveValue(55);
+  const previousWorkout = screen.getByLabelText('Previous Movement A workout');
+  expect(within(previousWorkout).getByText('Set 1')).toBeVisible();
+  expect(within(previousWorkout).getByText('55 lb × 5')).toBeVisible();
+  expect(within(previousWorkout).getByText('RPE —')).toBeVisible();
   const raw = adapter.raw();
   expect(raw).not.toBeNull();
   const saved: unknown = raw ? JSON.parse(raw) : null;
