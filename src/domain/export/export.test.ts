@@ -43,6 +43,35 @@ describe('JSON export', () => {
     if (!result.ok) expect(result.errors[0]?.code).toBe('IMP-7_PROGRAM_CONFLICT');
     expect(current).toEqual(snapshot);
   });
+
+  it('round-trips explicit skipped-exercise decisions without inventing set logs', () => {
+    const program = validProgram(minimalJson);
+    const root = rootWith(program);
+    root.sessionLogs = [
+      {
+        sessionLogId: 'session-with-skip',
+        programId: program.programId,
+        programVersion: program.version,
+        sessionId: 'full-body',
+        startedAt: '2026-09-15T10:00:00-07:00',
+        completedAt: '2026-09-15T10:30:00-07:00',
+        setLogs: [],
+        skippedExercises: [
+          {
+            exerciseId: 'barbell-bench-press',
+            blockIndex: 1,
+            entryIndex: 0,
+            skippedAt: '2026-09-15T10:05:00-07:00',
+          },
+        ],
+      },
+    ];
+    const parsed = fromExportJson(toExportJson(root, '2026-09-15T11:00:00-07:00'));
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.document.data).toEqual(root);
+    expect(parsed.document.data.sessionLogs[0]?.setLogs).toEqual([]);
+  });
 });
 
 describe('CSV export', () => {
@@ -85,6 +114,7 @@ describe('CSV export', () => {
           sessionId: 'full-body',
           startedAt: '2026-03-01T10:00:00-07:00',
           completedAt: '2026-03-01T11:00:00-07:00',
+          skippedExercises: [],
           setLogs: [
             {
               setLogId: 'set-log-1',
@@ -119,6 +149,7 @@ describe('CSV export', () => {
         sessionId: 'a-top-set',
         startedAt: '2026-09-13T10:00:00-07:00',
         completedAt: '2026-09-13T11:00:00-07:00',
+        skippedExercises: [],
         setLogs: [
           {
             setLogId: 'top-set',

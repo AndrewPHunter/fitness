@@ -107,8 +107,8 @@ export function DataPage({ store }: { store: AppStore }) {
   return (
     <main className="page">
       <header className="page-header">
-        <p className="eyebrow">Data & backup</p>
-        <h1>Your browser is the only vault.</h1>
+        <p className="eyebrow">Backup & restore</p>
+        <h1>Protect your training history.</h1>
         <p className="muted">
           The operating system can clear browser storage, especially when a site has not been used
           for a while. JSON export is the only backup.

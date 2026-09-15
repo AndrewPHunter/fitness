@@ -551,6 +551,23 @@ p {
   display: flex;
   gap: var(--space-sm);
 }
+.set-heading-row {
+  align-items: start;
+  flex-wrap: wrap;
+}
+.set-marker {
+  min-width: 0;
+}
+.set-marker > div {
+  min-width: 0;
+}
+.set-marker h2 {
+  overflow-wrap: anywhere;
+}
+.exercise-switch {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+}
 .set-number {
   align-items: center;
   background: var(--accent);
@@ -570,6 +587,37 @@ p {
   display: grid;
   gap: var(--space-xs);
   padding: var(--space-md);
+}
+.previous-workout {
+  border-block: 1px solid var(--border-subtle);
+  display: grid;
+  gap: var(--space-sm);
+  padding-block: var(--space-md);
+}
+.previous-workout time {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.previous-set-grid {
+  display: flex;
+  gap: var(--space-xs);
+  list-style: none;
+  margin: 0;
+  overflow-x: auto;
+  padding: 0;
+}
+.previous-set-grid li {
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  display: grid;
+  flex: 1 0 5.5rem;
+  gap: var(--space-2xs);
+  padding: var(--space-sm);
+}
+.previous-set-grid span,
+.previous-set-grid small {
+  color: var(--muted);
+  font-size: 0.75rem;
 }
 .actual-fields {
   display: grid;
@@ -641,6 +689,84 @@ p {
   display: grid;
   gap: var(--space-xs);
 }
+.workout-exercise-list {
+  display: grid;
+  gap: var(--space-lg);
+}
+.logged-group {
+  display: grid;
+  gap: var(--space-xs);
+}
+.logged-group + .logged-group {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-md);
+}
+.logged-group-heading {
+  align-items: baseline;
+}
+.logged-group-actions {
+  align-items: center;
+  display: flex;
+  gap: var(--space-xs);
+}
+.skipped-group {
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm);
+}
+.skipped-review {
+  display: grid;
+  gap: var(--space-sm);
+}
+.exercise-picker-dialog {
+  max-height: calc(100dvh - 6rem);
+  overflow: auto;
+}
+.exercise-choice-list {
+  display: grid;
+  gap: var(--space-xs);
+}
+.exercise-choice {
+  align-items: stretch;
+  display: grid;
+  gap: var(--space-xs);
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.exercise-choice-button {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: space-between;
+  min-height: 3.5rem;
+  padding: var(--space-sm);
+  text-align: left;
+  width: 100%;
+}
+.exercise-choice-button span:first-child {
+  display: grid;
+  gap: var(--space-2xs);
+}
+.exercise-choice-button small {
+  color: var(--muted);
+}
+.exercise-choice-button[aria-current='true'] {
+  background: color-mix(in srgb, var(--accent), var(--bg) 84%);
+  border-color: var(--accent);
+}
+.exercise-choice-button:disabled {
+  cursor: default;
+  opacity: 0.72;
+}
+.choice-status {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 760;
+}
 .logged-row {
   align-items: center;
   background: var(--bg);
@@ -664,6 +790,118 @@ p {
   display: grid;
   gap: var(--space-md);
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+}
+.history-view-switch {
+  display: grid;
+  gap: var(--space-xs);
+  grid-template-columns: 1fr 1fr;
+}
+.workout-record {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  overflow: clip;
+}
+.workout-record > summary {
+  align-items: center;
+  cursor: pointer;
+  display: grid;
+  gap: var(--space-sm);
+  grid-template-columns: minmax(5.5rem, auto) minmax(0, 1fr) auto;
+  min-height: 4.5rem;
+  padding: var(--space-md);
+}
+.workout-record > summary::marker {
+  color: var(--accent);
+}
+.workout-date,
+.workout-status {
+  font-size: 0.78rem;
+  font-weight: 760;
+}
+.workout-summary-main {
+  display: grid;
+  gap: var(--space-2xs);
+}
+.workout-summary-main small {
+  color: var(--muted);
+}
+.workout-summary-main h2 {
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+}
+.workout-status {
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  padding: var(--space-2xs) var(--space-xs);
+}
+.workout-record-body {
+  border-top: 1px solid var(--border-subtle);
+  display: grid;
+  gap: var(--space-md);
+  padding: var(--space-md);
+}
+.workout-movement-groups {
+  display: grid;
+  gap: var(--space-lg);
+}
+.workout-movement {
+  display: grid;
+  gap: var(--space-sm);
+}
+.workout-movement + .workout-movement {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-md);
+}
+.set-table,
+.exercise-history-sets {
+  display: grid;
+  gap: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.set-table li {
+  align-items: baseline;
+  border-top: 1px solid var(--border-subtle);
+  display: grid;
+  gap: var(--space-sm);
+  grid-template-columns: minmax(3rem, 0.6fr) minmax(7rem, 1fr) minmax(4rem, auto);
+  padding-block: var(--space-xs);
+}
+.set-table li > span:last-child {
+  color: var(--muted);
+  text-align: right;
+}
+.exercise-session {
+  display: grid;
+  gap: var(--space-md);
+}
+.exercise-session-heading {
+  align-items: start;
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: space-between;
+}
+.exercise-history-sets > li {
+  border-top: 1px solid var(--border-subtle);
+  padding-block: var(--space-sm);
+}
+.history-set-row {
+  align-items: center;
+  display: grid;
+  gap: var(--space-xs) var(--space-sm);
+  grid-template-columns: minmax(3rem, 0.6fr) minmax(7rem, 1fr) minmax(4rem, auto) auto;
+}
+.history-set-row > span:nth-child(3) {
+  color: var(--muted);
+}
+.history-set-actions {
+  display: flex;
+  gap: var(--space-xs);
+}
+.history-set-editor {
+  margin-top: var(--space-sm);
 }
 .history-link {
   background: var(--surface);
@@ -829,6 +1067,18 @@ p {
   }
 }
 
+@media (max-width: 47.99rem) {
+  .history-set-row {
+    grid-template-columns: minmax(3rem, 0.6fr) minmax(7rem, 1fr) minmax(4rem, auto);
+  }
+  .history-set-actions {
+    grid-column: 1 / -1;
+  }
+  .history-set-actions .button {
+    flex: 1;
+  }
+}
+
 @media (max-width: 23rem) {
   .actual-fields {
     grid-template-columns: 1fr 1fr;
@@ -838,5 +1088,23 @@ p {
   }
   .nav-link {
     font-size: 0.66rem;
+  }
+  .workout-record > summary {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .workout-date {
+    grid-column: 1 / -1;
+  }
+  .history-set-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .history-set-actions {
+    grid-column: 1 / -1;
+  }
+  .exercise-choice {
+    grid-template-columns: 1fr;
+  }
+  .exercise-choice > .button {
+    width: 100%;
   }
 }

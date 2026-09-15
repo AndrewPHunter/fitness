@@ -31,6 +31,42 @@ export function exerciseHistory(setLogs: SetLog[], exerciseId: string): SetLog[]
     });
 }
 
+export interface ExerciseSessionHistory {
+  sessionLogId: string;
+  startedAt: string;
+  completedAt: string | null;
+  sets: SetLog[];
+}
+
+export function previousExerciseSession(
+  sessionLogs: SessionLog[],
+  exerciseId: string,
+  excludingSessionLogId: string,
+): ExerciseSessionHistory | null {
+  const previous = sessionLogs
+    .filter(
+      (sessionLog) =>
+        sessionLog.sessionLogId !== excludingSessionLogId &&
+        sessionLog.setLogs.some((setLog) => setLog.exerciseId === exerciseId),
+    )
+    .sort((left, right) => {
+      const time = right.startedAt.localeCompare(left.startedAt);
+      return time === 0 ? right.sessionLogId.localeCompare(left.sessionLogId) : time;
+    })[0];
+  if (!previous) return null;
+  return {
+    sessionLogId: previous.sessionLogId,
+    startedAt: previous.startedAt,
+    completedAt: previous.completedAt,
+    sets: previous.setLogs
+      .filter((setLog) => setLog.exerciseId === exerciseId)
+      .sort((left, right) => {
+        const logged = left.loggedAt.localeCompare(right.loggedAt);
+        return logged === 0 ? left.setLogId.localeCompare(right.setLogId) : logged;
+      }),
+  };
+}
+
 function dateKey(iso: string, timezone: string): string {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: timezone,

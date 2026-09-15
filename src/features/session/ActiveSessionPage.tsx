@@ -1,10 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { allSetLogs, lastLoggedWeight, prefillWeight } from '../../domain/history/history';
+import {
+  allSetLogs,
+  lastLoggedWeight,
+  prefillWeight,
+  previousExerciseSession,
+} from '../../domain/history/history';
 import { entrySetCount, isPerSetEntry, prescribedReps } from '../../domain/program/prescription';
-import type { Load, SetLog } from '../../domain/program/types';
-import { plannedSetKey, plannedSets, type PlannedSet } from '../../domain/session/plannedSets';
-import type { AppStore } from '../../domain/state/appStore';
+import type { ExerciseEntry, Load, Session, SetLog } from '../../domain/program/types';
+import {
+  plannedEntryKey,
+  plannedSetKey,
+  plannedSets,
+  type PlannedSet,
+} from '../../domain/session/plannedSets';
+import type { AppStore, ExercisePosition } from '../../domain/state/appStore';
 import { formatLoad } from '../../domain/units/load';
 import { Button } from '../../ui/atoms/Button';
 import { Input } from '../../ui/atoms/Input';
@@ -17,16 +27,179 @@ function validRpe(value: string): boolean {
   return number >= 1 && number <= 10 && number * 2 === Math.round(number * 2);
 }
 
+interface SessionMovement extends ExercisePosition {
+  entry: ExerciseEntry;
+  name: string;
+  isSuperset: boolean;
+}
+
+function sessionMovements(
+  session: Session,
+  exerciseName: (exerciseId: string) => string,
+): SessionMovement[] {
+  return session.blocks.flatMap<SessionMovement>((block, blockIndex) => {
+    if (block.type === 'single')
+      return [
+        {
+          blockIndex,
+          entryIndex: 0,
+          exerciseId: block.entry.exerciseId,
+          entry: block.entry,
+          name: exerciseName(block.entry.exerciseId),
+          isSuperset: false,
+        },
+      ];
+    return block.entries.map((entry, entryIndex) => ({
+      blockIndex,
+      entryIndex,
+      exerciseId: entry.exerciseId,
+      entry,
+      name: exerciseName(entry.exerciseId),
+      isSuperset: true,
+    }));
+  });
+}
+
+function ExercisePickerDialog({
+  movements,
+  log,
+  selectedKey,
+  store,
+  onSelect,
+  onClose,
+}: {
+  movements: SessionMovement[];
+  log: NonNullable<ReturnType<AppStore['activeSession']>>;
+  selectedKey: string | null;
+  store: AppStore;
+  onSelect(key: string): void;
+  onClose(): void;
+}) {
+  const dialog = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const invoker = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const node = dialog.current;
+    const focusable = () =>
+      node
+        ? [
+            ...node.querySelectorAll<HTMLElement>('button:not([disabled]), [href], [tabindex]'),
+          ].filter((element) => element.tabIndex >= 0)
+        : [];
+    focusable()[0]?.focus();
+    const keepFocusInside = (event: FocusEvent) => {
+      if (node && event.target instanceof Node && !node.contains(event.target)) {
+        focusable()[0]?.focus();
+      }
+    };
+    const trapTab = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const items = focusable();
+      const first = items[0];
+      const last = items.at(-1);
+      if (!first || !last) return;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('focusin', keepFocusInside);
+    node?.addEventListener('keydown', trapTab);
+    return () => {
+      document.removeEventListener('focusin', keepFocusInside);
+      node?.removeEventListener('keydown', trapTab);
+      if (invoker?.isConnected) invoker.focus();
+    };
+  }, [onClose]);
+
+  return (
+    <div className="dialog-backdrop" role="presentation">
+      <section
+        ref={dialog}
+        className="dialog exercise-picker-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="exercise-picker-title"
+        aria-describedby="exercise-picker-description"
+      >
+        <div className="stack">
+          <h2 id="exercise-picker-title">Choose an exercise</h2>
+          <p id="exercise-picker-description" className="muted">
+            Work in any order. The program order remains the default.
+          </p>
+        </div>
+        <div className="exercise-choice-list">
+          {movements.map((movement) => {
+            const key = plannedEntryKey(movement);
+            const logged = log.setLogs.filter((setLog) => plannedEntryKey(setLog) === key).length;
+            const skipped = log.skippedExercises.some((entry) => plannedEntryKey(entry) === key);
+            const complete = logged === entrySetCount(movement.entry);
+            const active = selectedKey === key;
+            return (
+              <div className="exercise-choice" key={key}>
+                <button
+                  className="exercise-choice-button"
+                  type="button"
+                  aria-current={active ? 'true' : undefined}
+                  disabled={complete || skipped}
+                  onClick={() => onSelect(key)}
+                >
+                  <span>
+                    <strong>{movement.name}</strong>
+                    <small>
+                      Block {movement.blockIndex + 1}
+                      {movement.isSuperset ? ` · movement ${movement.entryIndex + 1}` : ''} ·{' '}
+                      {logged} of {entrySetCount(movement.entry)} sets logged
+                    </small>
+                  </span>
+                  <span className="choice-status">
+                    {skipped ? 'Skipped' : complete ? 'Complete' : active ? 'Current' : 'Choose'}
+                  </span>
+                </button>
+                {skipped ? (
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      const result = store.restoreExercise(log.sessionLogId, movement);
+                      if (result.ok) onSelect(key);
+                    }}
+                  >
+                    Include again
+                  </Button>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+        <Button variant="ghost" onClick={onClose}>
+          Close
+        </Button>
+      </section>
+    </div>
+  );
+}
+
 function SetLogger({
   task,
   exerciseName,
   store,
   sessionLogId,
+  onChooseExercise,
+  onSkipExercise,
 }: {
   task: PlannedSet;
   exerciseName: string;
   store: AppStore;
   sessionLogId: string;
+  onChooseExercise(): void;
+  onSkipExercise(): void;
 }) {
   const historyWeight = lastLoggedWeight(allSetLogs(store.data.sessionLogs), task.entry.exerciseId);
   const prefill = prefillWeight(
@@ -40,6 +213,11 @@ function SetLogger({
   const [rpe, setRpe] = useState('');
   const [touched, setTouched] = useState(false);
   const [inputError, setInputError] = useState('');
+  const previous = previousExerciseSession(
+    store.data.sessionLogs,
+    task.entry.exerciseId,
+    sessionLogId,
+  );
 
   const confirm = () => {
     const weightNumber = Number(weight);
@@ -66,19 +244,24 @@ function SetLogger({
 
   return (
     <section className="current-set">
-      <div className="set-marker">
-        <span className="set-number">{task.setIndex + 1}</span>
-        <div>
-          <p className="eyebrow">
-            {task.isSuperset
-              ? `Superset · movement ${task.entryIndex + 1}`
-              : `Block ${task.blockIndex + 1}`}
-          </p>
-          <h2>{exerciseName}</h2>
-          {isPerSetEntry(task.entry) && task.entry.notes ? (
-            <p className="muted">{task.entry.notes}</p>
-          ) : null}
+      <div className="spread set-heading-row">
+        <div className="set-marker">
+          <span className="set-number">{task.setIndex + 1}</span>
+          <div>
+            <p className="eyebrow">
+              {task.isSuperset
+                ? `Superset · movement ${task.entryIndex + 1}`
+                : `Block ${task.blockIndex + 1}`}
+            </p>
+            <h2>{exerciseName}</h2>
+            {isPerSetEntry(task.entry) && task.entry.notes ? (
+              <p className="muted">{task.entry.notes}</p>
+            ) : null}
+          </div>
         </div>
+        <Button variant="ghost" className="exercise-switch" onClick={onChooseExercise}>
+          Switch
+        </Button>
       </div>
       <div className="prescribed-band">
         <p className="eyebrow">Prescribed — reference only</p>
@@ -101,6 +284,27 @@ function SetLogger({
           <p>{task.prescription.notes}</p>
         ) : null}
       </div>
+      {previous ? (
+        <section className="previous-workout" aria-label={`Previous ${exerciseName} workout`}>
+          <div className="spread">
+            <p className="eyebrow">Previous workout</p>
+            <time dateTime={previous.startedAt}>
+              {new Date(previous.startedAt).toLocaleDateString()}
+            </time>
+          </div>
+          <ol className="previous-set-grid">
+            {previous.sets.map((setLog, index) => (
+              <li key={setLog.setLogId}>
+                <span>Set {index + 1}</span>
+                <strong>
+                  {formatLoad(setLog.weight)} × {setLog.reps}
+                </strong>
+                <small>{setLog.rpe === null ? 'RPE —' : `RPE ${setLog.rpe}`}</small>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ) : null}
       <div className="stack actual-heading">
         <div className="spread">
           <p className="eyebrow">Actual — your set</p>
@@ -193,6 +397,9 @@ function SetLogger({
           <option value="lb">lb</option>
         </select>
       </div>
+      <Button variant="ghost" wide onClick={onSkipExercise}>
+        Skip {exerciseName} for this workout
+      </Button>
     </section>
   );
 }
@@ -294,6 +501,8 @@ export function ActiveSessionPage({ store }: { store: AppStore }) {
   const navigate = useNavigate();
   const [leaving, setLeaving] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
+  const [choosingExercise, setChoosingExercise] = useState(false);
+  const [selectedMovementKey, setSelectedMovementKey] = useState<string | null>(null);
   const log = store.activeSession();
   if (!log)
     return (
@@ -325,9 +534,22 @@ export function ActiveSessionPage({ store }: { store: AppStore }) {
       </main>
     );
   const plan = plannedSets(session);
+  const exerciseName = (exerciseId: string) =>
+    program.exercises.find((exercise) => exercise.exerciseId === exerciseId)?.name ?? exerciseId;
+  const movements = sessionMovements(session, exerciseName);
   const loggedKeys = new Set(log.setLogs.map(plannedSetKey));
-  const current = plan.find((task) => !loggedKeys.has(plannedSetKey(task)));
-  const progress = plan.length === 0 ? 0 : (log.setLogs.length / plan.length) * 100;
+  const skippedKeys = new Set(log.skippedExercises.map(plannedEntryKey));
+  const remaining = plan.filter(
+    (task) => !loggedKeys.has(plannedSetKey(task)) && !skippedKeys.has(plannedEntryKey(task)),
+  );
+  const selectedCurrent = selectedMovementKey
+    ? remaining.find((task) => plannedEntryKey(task) === selectedMovementKey)
+    : undefined;
+  const current = selectedCurrent ?? remaining[0];
+  const resolvedCount = plan.filter(
+    (task) => loggedKeys.has(plannedSetKey(task)) || skippedKeys.has(plannedEntryKey(task)),
+  ).length;
+  const progress = plan.length === 0 ? 0 : (resolvedCount / plan.length) * 100;
   const complete = () => {
     const result = store.completeSession(log.sessionLogId);
     if (result.ok) navigate('/', { state: { preserveFeedback: true } });
@@ -339,7 +561,7 @@ export function ActiveSessionPage({ store }: { store: AppStore }) {
       return;
     }
     store.announce(
-      `${session.name} left open · ${log.setLogs.length} logged set${log.setLogs.length === 1 ? '' : 's'} kept.`,
+      `${session.name} left open · ${log.setLogs.length} logged set${log.setLogs.length === 1 ? '' : 's'} kept${log.skippedExercises.length > 0 ? ` · ${log.skippedExercises.length} skipped exercise${log.skippedExercises.length === 1 ? '' : 's'} kept` : ''}.`,
     );
     navigate('/', { state: { preserveFeedback: true } });
   };
@@ -349,7 +571,8 @@ export function ActiveSessionPage({ store }: { store: AppStore }) {
         <div className="spread">
           <div>
             <p className="eyebrow">
-              Active session · {log.setLogs.length}/{plan.length} sets
+              Active session · {log.setLogs.length} logged
+              {log.skippedExercises.length > 0 ? ` · ${log.skippedExercises.length} skipped` : ''}
             </p>
             <h1>{session.name}</h1>
           </div>
@@ -364,7 +587,8 @@ export function ActiveSessionPage({ store }: { store: AppStore }) {
           className="progress-track"
           role="progressbar"
           aria-label="Session progress"
-          aria-valuenow={log.setLogs.length}
+          aria-valuetext={`${log.setLogs.length} sets logged and ${log.skippedExercises.length} exercises skipped`}
+          aria-valuenow={resolvedCount}
           aria-valuemin={0}
           aria-valuemax={plan.length}
         >
@@ -377,21 +601,49 @@ export function ActiveSessionPage({ store }: { store: AppStore }) {
             <SetLogger
               key={plannedSetKey(current)}
               task={current}
-              exerciseName={
-                program.exercises.find(
-                  (exercise) => exercise.exerciseId === current.entry.exerciseId,
-                )?.name ?? current.entry.exerciseId
-              }
+              exerciseName={exerciseName(current.entry.exerciseId)}
               store={store}
               sessionLogId={log.sessionLogId}
+              onChooseExercise={() => setChoosingExercise(true)}
+              onSkipExercise={() => {
+                const result = store.skipExercise(log.sessionLogId, {
+                  exerciseId: current.entry.exerciseId,
+                  blockIndex: current.blockIndex,
+                  entryIndex: current.entryIndex,
+                });
+                if (result.ok) setSelectedMovementKey(null);
+              }}
             />
           ) : (
             <section className="current-set">
-              <p className="eyebrow">All prescribed sets logged</p>
+              <p className="eyebrow">Workout accounted for</p>
               <h2>Session ready to complete</h2>
               <p className="muted">
-                Review corrections below, then mark the session complete to advance the rotation.
+                {log.setLogs.length} set{log.setLogs.length === 1 ? '' : 's'} logged
+                {log.skippedExercises.length > 0
+                  ? ` · ${log.skippedExercises.length} exercise${log.skippedExercises.length === 1 ? '' : 's'} skipped`
+                  : ''}
+                . Review your workout, then complete it to advance the program.
               </p>
+              {log.skippedExercises.length > 0 ? (
+                <div className="skipped-review">
+                  <p className="eyebrow">Skipped for this workout</p>
+                  {log.skippedExercises.map((skipped) => (
+                    <div className="spread" key={plannedEntryKey(skipped)}>
+                      <span>{exerciseName(skipped.exerciseId)}</span>
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          const result = store.restoreExercise(log.sessionLogId, skipped);
+                          if (result.ok) setSelectedMovementKey(plannedEntryKey(skipped));
+                        }}
+                      >
+                        Include again
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
               <Button wide onClick={complete}>
                 Complete session
               </Button>
@@ -399,54 +651,142 @@ export function ActiveSessionPage({ store }: { store: AppStore }) {
           )}
         </div>
         <aside className="stack">
-          <h2>Saved sets</h2>
-          {log.setLogs.length === 0 ? (
+          <h2>This workout</h2>
+          {log.setLogs.length === 0 && log.skippedExercises.length === 0 ? (
             <div className="empty-state">
               <p>No sets confirmed yet. Prefilled inputs are not saved automatically.</p>
             </div>
           ) : (
-            <div className="logged-list">
-              {log.setLogs.map((setLog) => (
-                <div key={setLog.setLogId}>
-                  {editing === setLog.setLogId ? (
-                    <LoggedSetEditor
-                      setLog={setLog}
-                      sessionLogId={log.sessionLogId}
-                      store={store}
-                      onDone={() => setEditing(null)}
-                    />
-                  ) : (
-                    <div className="logged-row">
-                      <div>
-                        <p className="saved-marker">
-                          <span className="state-symbol" aria-hidden="true">
-                            ✓
+            <div className="workout-exercise-list">
+              {movements
+                .filter((movement) =>
+                  log.setLogs.some(
+                    (setLog) => plannedEntryKey(setLog) === plannedEntryKey(movement),
+                  ),
+                )
+                .map((movement) => {
+                  const sets = log.setLogs
+                    .filter((setLog) => plannedEntryKey(setLog) === plannedEntryKey(movement))
+                    .sort((left, right) => left.setIndex - right.setIndex);
+                  const skipped = log.skippedExercises.some(
+                    (entry) => plannedEntryKey(entry) === plannedEntryKey(movement),
+                  );
+                  return (
+                    <section className="logged-group" key={plannedEntryKey(movement)}>
+                      <div className="spread logged-group-heading">
+                        <div>
+                          <strong>{movement.name}</strong>
+                          <p className="exercise-id">
+                            Block {movement.blockIndex + 1}
+                            {movement.isSuperset
+                              ? ` · superset movement ${movement.entryIndex + 1}`
+                              : ''}
+                          </p>
+                          {skipped ? <p className="muted">Skipped for this workout</p> : null}
+                        </div>
+                        <div className="logged-group-actions">
+                          <span className="badge">
+                            {sets.length}/{entrySetCount(movement.entry)} sets
                           </span>
-                          Saved
-                        </p>
-                        <strong>
-                          {
-                            program.exercises.find(
-                              (exercise) => exercise.exerciseId === setLog.exerciseId,
-                            )?.name
-                          }
-                        </strong>
-                        <p className="muted">
-                          {formatLoad(setLog.weight)} × {setLog.reps}
-                          {setLog.rpe === null ? '' : ` · RPE ${setLog.rpe}`}
-                        </p>
+                          {skipped ? (
+                            <Button
+                              variant="ghost"
+                              onClick={() => {
+                                const result = store.restoreExercise(log.sessionLogId, movement);
+                                if (result.ok) setSelectedMovementKey(plannedEntryKey(movement));
+                              }}
+                            >
+                              Include
+                            </Button>
+                          ) : null}
+                        </div>
                       </div>
-                      <button className="text-button" onClick={() => setEditing(setLog.setLogId)}>
-                        Correct
-                      </button>
+                      <div className="logged-list">
+                        {sets.map((setLog) => (
+                          <div key={setLog.setLogId}>
+                            {editing === setLog.setLogId ? (
+                              <LoggedSetEditor
+                                setLog={setLog}
+                                sessionLogId={log.sessionLogId}
+                                store={store}
+                                onDone={() => setEditing(null)}
+                              />
+                            ) : (
+                              <div className="logged-row">
+                                <div>
+                                  <p className="saved-marker">
+                                    <span className="state-symbol" aria-hidden="true">
+                                      ✓
+                                    </span>
+                                    Saved · Set {setLog.setIndex + 1}
+                                  </p>
+                                  <strong>
+                                    {formatLoad(setLog.weight)} × {setLog.reps}
+                                  </strong>
+                                  <span className="muted">
+                                    {setLog.rpe === null ? ' · RPE —' : ` · RPE ${setLog.rpe}`}
+                                  </span>
+                                </div>
+                                <button
+                                  className="text-button"
+                                  onClick={() => setEditing(setLog.setLogId)}
+                                >
+                                  Correct
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  );
+                })}
+              {log.skippedExercises
+                .filter(
+                  (skipped) =>
+                    !log.setLogs.some(
+                      (setLog) => plannedEntryKey(setLog) === plannedEntryKey(skipped),
+                    ),
+                )
+                .map((skipped) => (
+                  <section
+                    className="logged-group skipped-group"
+                    key={`skipped-${plannedEntryKey(skipped)}`}
+                  >
+                    <div className="spread logged-group-heading">
+                      <div>
+                        <strong>{exerciseName(skipped.exerciseId)}</strong>
+                        <p className="muted">Skipped for this workout</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          const result = store.restoreExercise(log.sessionLogId, skipped);
+                          if (result.ok) setSelectedMovementKey(plannedEntryKey(skipped));
+                        }}
+                      >
+                        Include
+                      </Button>
                     </div>
-                  )}
-                </div>
-              ))}
+                  </section>
+                ))}
             </div>
           )}
         </aside>
       </div>
+      {choosingExercise ? (
+        <ExercisePickerDialog
+          movements={movements}
+          log={log}
+          selectedKey={current ? plannedEntryKey(current) : null}
+          store={store}
+          onSelect={(key) => {
+            setSelectedMovementKey(key);
+            setChoosingExercise(false);
+          }}
+          onClose={() => setChoosingExercise(false)}
+        />
+      ) : null}
       {leaving ? (
         <ConfirmDialog
           destructive={log.setLogs.length === 0}
@@ -454,7 +794,7 @@ export function ActiveSessionPage({ store }: { store: AppStore }) {
           description={
             log.setLogs.length === 0
               ? 'No sets have been logged. This removes the empty session and does not advance the program rotation.'
-              : `All ${log.setLogs.length} confirmed sets will stay saved. The session will remain in progress and Today will offer Resume; the rotation will not advance.`
+              : `All ${log.setLogs.length} confirmed sets and ${log.skippedExercises.length} skipped exercise${log.skippedExercises.length === 1 ? '' : 's'} will stay saved. The session will remain in progress and Today will offer Resume; the rotation will not advance.`
           }
           confirmLabel={log.setLogs.length === 0 ? 'Discard empty session' : 'Leave and keep sets'}
           onConfirm={leaveOrDiscard}

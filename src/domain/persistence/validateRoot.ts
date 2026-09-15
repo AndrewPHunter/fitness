@@ -1,7 +1,11 @@
 import Ajv2020, { type ErrorObject } from 'ajv/dist/2020.js';
 import programSchema from '../../../fixtures/schema/program.schema.json';
-import { CURRENT_SCHEMA_VERSION, migrate } from '../migration/migrate';
-import type { PersistedRootV0 } from '../migration/migrations';
+import {
+  CURRENT_SCHEMA_VERSION,
+  migrateV0ToCurrent,
+  migrateV1ToCurrent,
+} from '../migration/migrate';
+import type { PersistedRootV0, PersistedRootV1 } from '../migration/migrations';
 import type { PersistedRoot, ValidationError } from '../program/types';
 import { validateSemantics } from '../program/validateSemantics';
 
@@ -54,7 +58,7 @@ const storedProgramSchema = {
   },
 };
 
-const sessionLogSchema = {
+const sessionLogV1Schema = {
   type: 'object',
   additionalProperties: false,
   required: [
@@ -78,9 +82,29 @@ const sessionLogSchema = {
   },
 };
 
+const skippedExerciseSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['exerciseId', 'blockIndex', 'entryIndex', 'skippedAt'],
+  properties: {
+    exerciseId: { type: 'string', pattern: '^[a-z0-9]+(-[a-z0-9]+)*$' },
+    blockIndex: { type: 'integer', minimum: 0 },
+    entryIndex: { type: 'integer', minimum: 0 },
+    skippedAt: { type: 'string', minLength: 1 },
+  },
+};
+
+const sessionLogSchema = {
+  ...sessionLogV1Schema,
+  required: [...sessionLogV1Schema.required, 'skippedExercises'],
+  properties: {
+    ...sessionLogV1Schema.properties,
+    skippedExercises: { type: 'array', items: skippedExerciseSchema },
+  },
+};
+
 const commonProperties = {
   programs: { type: 'array', items: storedProgramSchema },
-  sessionLogs: { type: 'array', items: sessionLogSchema },
   activeProgram: {
     anyOf: [
       { type: 'null' },
@@ -98,13 +122,34 @@ const commonProperties = {
 };
 
 export const persistedRootSchema = {
-  $id: 'fitness-persisted-root-v1',
+  $id: 'fitness-persisted-root-v2',
+  type: 'object',
+  additionalProperties: false,
+  required: ['schemaVersion', 'programs', 'sessionLogs', 'settings', 'activeProgram'],
+  properties: {
+    schemaVersion: { const: 2 },
+    ...commonProperties,
+    sessionLogs: { type: 'array', items: sessionLogSchema },
+    settings: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['defaultUnit', 'theme'],
+      properties: {
+        defaultUnit: { enum: ['kg', 'lb'] },
+        theme: { enum: ['system', 'light', 'dark'] },
+      },
+    },
+  },
+};
+
+const persistedRootV1Schema = {
   type: 'object',
   additionalProperties: false,
   required: ['schemaVersion', 'programs', 'sessionLogs', 'settings', 'activeProgram'],
   properties: {
     schemaVersion: { const: 1 },
     ...commonProperties,
+    sessionLogs: { type: 'array', items: sessionLogV1Schema },
     settings: {
       type: 'object',
       additionalProperties: false,
@@ -121,12 +166,17 @@ const persistedRootV0Schema = {
   type: 'object',
   additionalProperties: false,
   required: ['schemaVersion', 'programs', 'sessionLogs', 'activeProgram'],
-  properties: { schemaVersion: { const: 0 }, ...commonProperties },
+  properties: {
+    schemaVersion: { const: 0 },
+    ...commonProperties,
+    sessionLogs: { type: 'array', items: sessionLogV1Schema },
+  },
 };
 
 const ajv = new Ajv2020({ allErrors: true, strict: true });
 ajv.addSchema(programSchema);
 const validateCurrent = ajv.compile<PersistedRoot>(persistedRootSchema);
+const validateV1 = ajv.compile<PersistedRootV1>(persistedRootV1Schema);
 const validateV0 = ajv.compile<PersistedRootV0>(persistedRootV0Schema);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -202,6 +252,32 @@ function integrityErrors(root: PersistedRoot): ValidationError[] {
         path: `/data/sessionLogs/${sessionIndex}/sessionId`,
         message: `Session ${JSON.stringify(sessionLog.sessionId)} must exist in program ${program.programId} v${program.version}.`,
       });
+    const skippedPositions = new Set<string>();
+    sessionLog.skippedExercises.forEach((skipped, skippedIndex) => {
+      const position = `${skipped.blockIndex}:${skipped.entryIndex}`;
+      if (skippedPositions.has(position))
+        errors.push({
+          layer: 'semantic',
+          code: 'DATA_DUPLICATE_SKIPPED_EXERCISE',
+          path: `/data/sessionLogs/${sessionIndex}/skippedExercises/${skippedIndex}`,
+          message: `Exercise position ${position} is skipped more than once.`,
+        });
+      skippedPositions.add(position);
+      const block = session?.blocks[skipped.blockIndex];
+      const entry =
+        block?.type === 'single'
+          ? skipped.entryIndex === 0
+            ? block.entry
+            : undefined
+          : block?.entries[skipped.entryIndex];
+      if (!entry || entry.exerciseId !== skipped.exerciseId)
+        errors.push({
+          layer: 'semantic',
+          code: 'DATA_SKIPPED_EXERCISE_REFERENCE',
+          path: `/data/sessionLogs/${sessionIndex}/skippedExercises/${skippedIndex}`,
+          message: `Skipped exercise must match an entry in the logged session prescription.`,
+        });
+    });
     sessionLog.setLogs.forEach((setLog, setIndex) => {
       if (setIds.has(setLog.setLogId))
         errors.push({
@@ -279,7 +355,11 @@ export function decodePersistedRoot(value: unknown): RootDecodeResult {
   let migrated = false;
   if (version === 0) {
     if (!validateV0(value)) return { ok: false, errors: errorsFromAjv(validateV0.errors) };
-    root = migrate(value);
+    root = migrateV0ToCurrent(value);
+    migrated = true;
+  } else if (version === 1) {
+    if (!validateV1(value)) return { ok: false, errors: errorsFromAjv(validateV1.errors) };
+    root = migrateV1ToCurrent(value);
     migrated = true;
   } else {
     if (!validateCurrent(value))

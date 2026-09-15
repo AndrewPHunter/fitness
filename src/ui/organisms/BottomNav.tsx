@@ -5,7 +5,7 @@ const links = [
   { to: '/author', label: 'Author', glyph: '02', end: false },
   { to: '/programs', label: 'Programs', glyph: '03', end: false },
   { to: '/history', label: 'History', glyph: '04', end: false },
-  { to: '/data', label: 'Data', glyph: '05', end: false },
+  { to: '/data', label: 'Backup', glyph: '05', end: false },
   { to: '/settings', label: 'Settings', glyph: '06', end: false },
 ];
 

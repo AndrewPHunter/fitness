@@ -16,6 +16,16 @@ interface LocatedSet {
   sessionId: string;
 }
 
+interface SessionGroup {
+  sessionLogId: string;
+  programId: string;
+  version: number;
+  sessionId: string;
+  startedAt: string;
+  completedAt: string | null;
+  rows: LocatedSet[];
+}
+
 export function ExerciseHistoryPage({ store }: { store: AppStore }) {
   const { exerciseId = '' } = useParams();
   const [editing, setEditing] = useState<LocatedSet | null>(null);
@@ -24,10 +34,20 @@ export function ExerciseHistoryPage({ store }: { store: AppStore }) {
   const [reps, setReps] = useState('');
   const [rpe, setRpe] = useState('');
   const [inputError, setInputError] = useState('');
-  const rows: LocatedSet[] = store.data.sessionLogs
-    .flatMap((sessionLog) =>
-      sessionLog.setLogs
+  const groups: SessionGroup[] = store.data.sessionLogs
+    .map((sessionLog) => ({
+      sessionLogId: sessionLog.sessionLogId,
+      programId: sessionLog.programId,
+      version: sessionLog.programVersion,
+      sessionId: sessionLog.sessionId,
+      startedAt: sessionLog.startedAt,
+      completedAt: sessionLog.completedAt,
+      rows: sessionLog.setLogs
         .filter((setLog) => setLog.exerciseId === exerciseId)
+        .sort((left, right) => {
+          const index = left.setIndex - right.setIndex;
+          return index === 0 ? left.loggedAt.localeCompare(right.loggedAt) : index;
+        })
         .map((setLog) => ({
           setLog,
           sessionLogId: sessionLog.sessionLogId,
@@ -35,8 +55,12 @@ export function ExerciseHistoryPage({ store }: { store: AppStore }) {
           version: sessionLog.programVersion,
           sessionId: sessionLog.sessionId,
         })),
-    )
-    .sort((left, right) => right.setLog.loggedAt.localeCompare(left.setLog.loggedAt));
+    }))
+    .filter((group) => group.rows.length > 0)
+    .sort((left, right) => {
+      const time = right.startedAt.localeCompare(left.startedAt);
+      return time === 0 ? right.sessionLogId.localeCompare(left.sessionLogId) : time;
+    });
   const definition = [...store.data.programs]
     .reverse()
     .flatMap(({ program }) => program.exercises)
@@ -83,7 +107,7 @@ export function ExerciseHistoryPage({ store }: { store: AppStore }) {
         <h1>{definition?.name ?? exerciseId}</h1>
         <p className="exercise-id">{exerciseId}</p>
       </header>
-      {rows.length === 0 ? (
+      {groups.length === 0 ? (
         <div className="empty-state">
           <h2>No sets found</h2>
           <p className="muted">This exercise has no logged history on this device.</p>
@@ -92,92 +116,104 @@ export function ExerciseHistoryPage({ store }: { store: AppStore }) {
           </Link>
         </div>
       ) : (
-        <section className="stack">
-          {rows.map((row) => {
+        <section className="stack" aria-label={`${definition?.name ?? exerciseId} workouts`}>
+          {groups.map((group) => {
             const program = store.data.programs.find(
               ({ program: candidate }) =>
-                candidate.programId === row.programId && candidate.version === row.version,
+                candidate.programId === group.programId && candidate.version === group.version,
             )?.program;
             const sessionName =
-              program?.sessions.find((session) => session.sessionId === row.sessionId)?.name ??
-              row.sessionId;
+              program?.sessions.find((session) => session.sessionId === group.sessionId)?.name ??
+              group.sessionId;
             return (
-              <article className="surface stack" key={row.setLog.setLogId}>
-                <div className="spread">
+              <article className="surface exercise-session" key={group.sessionLogId}>
+                <header className="exercise-session-heading">
                   <div>
-                    <h2>
-                      {formatLoad(row.setLog.weight)} × {row.setLog.reps}
-                    </h2>
+                    <p className="eyebrow">
+                      {new Date(group.startedAt).toLocaleDateString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </p>
+                    <h2>{sessionName}</h2>
                     <p className="muted">
-                      {row.setLog.rpe === null ? 'RPE not recorded' : `RPE ${row.setLog.rpe}`} ·{' '}
-                      {new Date(row.setLog.loggedAt).toLocaleString()}
+                      {program?.name ?? group.programId} · v{group.version}
                     </p>
                   </div>
-                  <span className="badge">Set {row.setLog.setIndex + 1}</span>
-                </div>
-                <p>
-                  <strong>
-                    {program?.name ?? row.programId} v{row.version}
-                  </strong>
-                  <br />
-                  <span className="muted">{sessionName}</span>
-                </p>
-                <div className="cluster">
-                  <Button variant="secondary" onClick={() => beginEdit(row)}>
-                    Edit set
-                  </Button>
-                  <Button variant="ghost" onClick={() => setDeleting(row)}>
-                    Delete set
-                  </Button>
-                </div>
-                {editing?.setLog.setLogId === row.setLog.setLogId ? (
-                  <div className="surface-quiet stack">
-                    <h3>Edit actual values</h3>
-                    <div className="actual-fields">
-                      <FormField
-                        label={`Weight (${row.setLog.weight.unit})`}
-                        htmlFor="history-weight"
-                      >
-                        <Input
-                          id="history-weight"
-                          inputMode="decimal"
-                          type="number"
-                          value={weight}
-                          onChange={(event) => setWeight(event.target.value)}
-                        />
-                      </FormField>
-                      <FormField label="Reps" htmlFor="history-reps">
-                        <Input
-                          id="history-reps"
-                          inputMode="decimal"
-                          type="number"
-                          value={reps}
-                          onChange={(event) => setReps(event.target.value)}
-                        />
-                      </FormField>
-                      <FormField label="RPE" htmlFor="history-rpe">
-                        <Input
-                          id="history-rpe"
-                          inputMode="decimal"
-                          type="number"
-                          value={rpe}
-                          onChange={(event) => setRpe(event.target.value)}
-                        />
-                      </FormField>
-                    </div>
-                    <div className="cluster">
-                      <Button onClick={save}>Save changes</Button>
-                      <Button variant="ghost" onClick={() => setEditing(null)}>
-                        Cancel
-                      </Button>
-                    </div>
-                    {inputError ? (
-                      <p className="error-code" role="alert">
-                        {inputError}
-                      </p>
-                    ) : null}
-                  </div>
-                ) : null}
+                  <span className="badge">
+                    {group.completedAt === null ? 'In progress' : `${group.rows.length} sets`}
+                  </span>
+                </header>
+                <ol className="exercise-history-sets">
+                  {group.rows.map((row) => (
+                    <li key={row.setLog.setLogId}>
+                      <div className="history-set-row">
+                        <span>Set {row.setLog.setIndex + 1}</span>
+                        <strong>
+                          {formatLoad(row.setLog.weight)} × {row.setLog.reps}
+                        </strong>
+                        <span>{row.setLog.rpe === null ? 'RPE —' : `RPE ${row.setLog.rpe}`}</span>
+                        <div className="history-set-actions">
+                          <Button variant="secondary" onClick={() => beginEdit(row)}>
+                            Edit set
+                          </Button>
+                          <Button variant="ghost" onClick={() => setDeleting(row)}>
+                            Delete set
+                          </Button>
+                        </div>
+                      </div>
+                      {editing?.setLog.setLogId === row.setLog.setLogId ? (
+                        <div className="surface-quiet stack history-set-editor">
+                          <h3>Correct logged set</h3>
+                          <div className="actual-fields">
+                            <FormField
+                              label={`Weight (${row.setLog.weight.unit})`}
+                              htmlFor={`history-weight-${row.setLog.setLogId}`}
+                            >
+                              <Input
+                                id={`history-weight-${row.setLog.setLogId}`}
+                                inputMode="decimal"
+                                type="number"
+                                value={weight}
+                                onChange={(event) => setWeight(event.target.value)}
+                              />
+                            </FormField>
+                            <FormField label="Reps" htmlFor={`history-reps-${row.setLog.setLogId}`}>
+                              <Input
+                                id={`history-reps-${row.setLog.setLogId}`}
+                                inputMode="decimal"
+                                type="number"
+                                value={reps}
+                                onChange={(event) => setReps(event.target.value)}
+                              />
+                            </FormField>
+                            <FormField label="RPE" htmlFor={`history-rpe-${row.setLog.setLogId}`}>
+                              <Input
+                                id={`history-rpe-${row.setLog.setLogId}`}
+                                inputMode="decimal"
+                                type="number"
+                                value={rpe}
+                                onChange={(event) => setRpe(event.target.value)}
+                              />
+                            </FormField>
+                          </div>
+                          <div className="cluster">
+                            <Button onClick={save}>Save changes</Button>
+                            <Button variant="ghost" onClick={() => setEditing(null)}>
+                              Cancel
+                            </Button>
+                          </div>
+                          {inputError ? (
+                            <p className="error-code" role="alert">
+                              {inputError}
+                            </p>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </li>
+                  ))}
+                </ol>
               </article>
             );
           })}

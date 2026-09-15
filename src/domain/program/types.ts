@@ -77,6 +77,13 @@ export interface SetLog {
   loggedAt: string;
 }
 
+export interface SkippedExerciseLog {
+  exerciseId: string;
+  blockIndex: number;
+  entryIndex: number;
+  skippedAt: string;
+}
+
 export interface SessionLog {
   sessionLogId: string;
   programId: string;
@@ -85,6 +92,7 @@ export interface SessionLog {
   startedAt: string;
   completedAt: string | null;
   setLogs: SetLog[];
+  skippedExercises: SkippedExerciseLog[];
   notes?: string;
 }
 
