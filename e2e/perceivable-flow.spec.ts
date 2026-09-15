@@ -219,6 +219,10 @@ test('empty sessions discard, while logged sessions only leave and keep their se
 test('the active program detail offers its named next session', async ({ page }) => {
   await pasteImportAndActivate(page);
   await page.getByRole('link', { name: 'View 1 sessions' }).click();
+  await expect(page).toHaveURL(/#\/programs\/minimal-full-body\/1$/u);
+  await expect(
+    page.getByRole('heading', { level: 1, name: /Minimal Full Body v1/u }),
+  ).toBeVisible();
   await expectPerceivable(page.getByRole('button', { name: 'Start Full Body' }));
 });
 
