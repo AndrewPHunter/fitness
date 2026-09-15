@@ -1,5 +1,9 @@
 # 10 — Acceptance Criteria & Scoring Rubric
 
+> **Amended.** [Amendment 005](15-amendment-005-perceivable-feedback.md) adds Sections P–U (35 pts), gate G13, and amendment-specific deductions.
+> Core is **185**. It also records that standard Playwright visibility matchers cannot verify
+> perceivability on their own.
+
 This document is the grading instrument. It is public and part of the specification: an
 implementation is entitled to know what it will be measured against.
 

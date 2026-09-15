@@ -1,5 +1,8 @@
 # 06 — UI & UX
 
+> **Amended.** [Amendment 005](15-amendment-005-perceivable-feedback.md) makes UX-8 necessary but not sufficient: every state change also needs
+> **visible** feedback in the usable viewport (FB, LOG, VAL, NEXT, SES, A11Y, VER).
+
 > **Amended.** [Amendment 003](13-amendment-003-pwa-and-palette.md) sets the colour scheme
 > (VIS-6..VIS-10) and requires contrast to be measured in CI, not asserted.
 >
@@ -29,7 +32,7 @@ reading carefully, and without scrolling.**
 | UX-5 | WCAG 2.1 AA contrast for text and interactive controls | Core |
 | UX-6 | Every control reachable and operable by keyboard; visible focus indicators | Core |
 | UX-7 | Numeric inputs use `inputmode="decimal"` so phones present a numeric keypad | Core |
-| UX-8 | All state changes announced to assistive tech via appropriate roles or live regions | Core |
+| UX-8 | All state changes announced to assistive tech via appropriate roles or live regions. **Necessary, not sufficient** — visible feedback also required by [Amendment 005](15-amendment-005-perceivable-feedback.md) | Core |
 | UX-9 | Every screen has a defined empty state with a clear next action | Core |
 | UX-10 | Every async or failable action has a defined error state, distinct from its success state | Core |
 
