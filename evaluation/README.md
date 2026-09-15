@@ -28,6 +28,12 @@ Cold one-shots and iterations measure different things and are tracked separatel
 
 ## Method
 
+> **Method correction, 2026-09-14.** UX criteria in rounds 1–5 were verified by DOM inspection —
+> text present in the page — not by what a user can perceive. Real use surfaced feedback,
+> scroll and navigation defects that method cannot detect. Scores stand against the rubric as
+> written, but read those UX passes as _present_, not _perceivable_. See the
+> [UX audit](2026-09-14-ux-audit.md).
+
 Per [`../specs/10-acceptance-criteria.md`](../specs/10-acceptance-criteria.md) §10.1, every
 criterion is checked by **observation or execution**. A claim in a README is not evidence.
 Each record states explicitly what was and was not independently verified.
