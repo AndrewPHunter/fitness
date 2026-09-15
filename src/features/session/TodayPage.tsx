@@ -35,16 +35,27 @@ export function TodayPage({ store }: { store: AppStore }) {
         <div className="empty-state">
           <h2>
             {store.data.programs.length === 0
-              ? 'Upload your first program'
+              ? 'Build your first program'
               : 'Activate a stored program'}
           </h2>
           <p className="muted">
             Programs are prescriptions. Your logged history remains separate and is never removed by
             activation.
           </p>
-          <Link className="button button-primary" to="/programs">
-            Open programs
-          </Link>
+          {store.data.programs.length === 0 ? (
+            <div className="cluster">
+              <Link className="button button-primary" to="/author">
+                Get the authoring prompt
+              </Link>
+              <Link className="button button-secondary" to="/programs?paste=1">
+                Import a program
+              </Link>
+            </div>
+          ) : (
+            <Link className="button button-primary" to="/programs">
+              Choose a program to activate
+            </Link>
+          )}
         </div>
       </main>
     );
@@ -64,7 +75,7 @@ export function TodayPage({ store }: { store: AppStore }) {
     : null;
   const start = () => {
     const result = store.startSession(next.session.sessionId);
-    if (result.ok) navigate('/session/active');
+    if (result.ok) navigate('/session/active', { state: { preserveFeedback: true } });
   };
   return (
     <main className="page">

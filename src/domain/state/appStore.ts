@@ -19,6 +19,8 @@ export interface AppStore {
   notice: string;
   failure: string | null;
   clearMessages(): void;
+  announce(message: string): void;
+  reportFailure(message: string): void;
   addProgram(program: Program): ActionResult;
   activateProgram(programId: string, version: number): ActionResult;
   startSession(sessionId: string): ActionResult;
@@ -32,6 +34,7 @@ export interface AppStore {
   ): ActionResult;
   deleteSet(sessionLogId: string, setLogId: string): ActionResult;
   completeSession(sessionLogId: string): ActionResult;
+  discardSession(sessionLogId: string): ActionResult;
   updateSettings(settings: Settings): ActionResult;
   replaceData(data: PersistedRoot): ActionResult;
   mergeData(data: PersistedRoot): { result: ActionResult; conflicts: string[] };

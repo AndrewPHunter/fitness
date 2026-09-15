@@ -168,6 +168,6 @@ it("shows each current set's own prescription and displays a range without judgi
   await user.click(screen.getByRole('button', { name: 'Log set' }));
   await user.click(screen.getByRole('button', { name: 'Log set' }));
   expect(screen.getByRole('heading', { name: 'Bench Press' })).toBeVisible();
-  expect(screen.getByText('3 sets × 8–12 reps')).toBeVisible();
+  expect(screen.getByText('Set 1 of 3 · 8–12 reps')).toBeVisible();
   expect(screen.queryByText(/ready to progress|add weight/iu)).not.toBeInTheDocument();
 });

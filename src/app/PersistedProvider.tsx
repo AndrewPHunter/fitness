@@ -19,9 +19,9 @@ interface ProviderValue {
 
 const StoreContext = createContext<ProviderValue | null>(null);
 
-function writeMessage(result: WriteResult, action: string): string {
+function writeMessage(result: WriteResult, outcome: string): string {
   if (result.ok) return '';
-  return `${action} was not saved. ${result.detail}`;
+  return `${outcome} ${result.detail}`;
 }
 
 export function PersistedProvider({
@@ -40,8 +40,14 @@ export function PersistedProvider({
   const [failure, setFailure] = useState<string | null>(null);
   const [notice, setNotice] = useState('');
 
+  const reject = useCallback((action: string, detail: string) => {
+    setNotice('');
+    setFailure(`${action} failed. ${detail}`);
+    return { ok: false, reason: 'unavailable' as const, detail };
+  }, []);
+
   const commit = useCallback(
-    (next: PersistedRoot, action: string): WriteResult => {
+    (next: PersistedRoot, action: string, successMessage: string): WriteResult => {
       const result = adapter.save(next);
       if (!result.ok) {
         setFailure(writeMessage(result, action));
@@ -50,7 +56,7 @@ export function PersistedProvider({
       }
       setData(next);
       setFailure(null);
-      setNotice(`${action} saved.`);
+      setNotice(successMessage);
       return result;
     },
     [adapter],
@@ -66,26 +72,36 @@ export function PersistedProvider({
         setNotice('');
         setFailure(null);
       },
+      announce: (message: string) => {
+        setFailure(null);
+        setNotice(message);
+      },
+      reportFailure: (message: string) => {
+        setNotice('');
+        setFailure(message);
+      },
       addProgram: (program: Program) =>
         commit(
           { ...data, programs: [...data.programs, { program, importedAt: clock.now() }] },
-          `${program.name} v${program.version}`,
+          `${program.name} v${program.version} was not imported.`,
+          `${program.name} v${program.version} imported.`,
         ),
-      activateProgram: (programId: string, version: number) =>
-        commit({ ...data, activeProgram: { programId, version } }, 'Active program'),
+      activateProgram: (programId: string, version: number) => {
+        const program = data.programs.find(
+          ({ program: candidate }) =>
+            candidate.programId === programId && candidate.version === version,
+        )?.program;
+        return commit(
+          { ...data, activeProgram: { programId, version } },
+          `${program?.name ?? programId} v${version} was not activated.`,
+          `${program?.name ?? programId} v${version} is active.`,
+        );
+      },
       startSession: (sessionId: string) => {
         if (!data.activeProgram)
-          return {
-            ok: false,
-            reason: 'unavailable',
-            detail: 'Activate a program before starting.',
-          };
+          return reject('Session start', 'Activate a program before starting.');
         if (data.sessionLogs.some((log) => log.completedAt === null))
-          return {
-            ok: false,
-            reason: 'unavailable',
-            detail: 'Resume the session already in progress.',
-          };
+          return reject('Session start', 'Resume the session already in progress.');
         const sessionLog = {
           sessionLogId: ids.next(),
           programId: data.activeProgram.programId,
@@ -95,23 +111,33 @@ export function PersistedProvider({
           completedAt: null,
           setLogs: [],
         };
-        return commit({ ...data, sessionLogs: [...data.sessionLogs, sessionLog] }, 'Session start');
+        const activeProgram = data.programs.find(
+          ({ program }) =>
+            program.programId === data.activeProgram?.programId &&
+            program.version === data.activeProgram.version,
+        )?.program;
+        const sessionName =
+          activeProgram?.sessions.find((session) => session.sessionId === sessionId)?.name ??
+          sessionId;
+        return commit(
+          { ...data, sessionLogs: [...data.sessionLogs, sessionLog] },
+          `${sessionName} was not started.`,
+          `${sessionName} started.`,
+        );
       },
       logSet: (input: LogSetInput) => {
         if (!isValidActual(input.weight, input.reps, input.rpe)) {
-          return {
-            ok: false,
-            reason: 'unavailable',
-            detail: 'Actual set values are outside the supported logging ranges.',
-          };
+          return reject(
+            `Set ${input.setIndex + 1} logging`,
+            'Actual set values are outside the supported logging ranges.',
+          );
         }
         const session = data.sessionLogs.find((log) => log.sessionLogId === input.sessionLogId);
         if (!session || session.completedAt !== null)
-          return {
-            ok: false,
-            reason: 'unavailable',
-            detail: 'The active session could not be found.',
-          };
+          return reject(
+            `Set ${input.setIndex + 1} logging`,
+            'The active session could not be found.',
+          );
         if (
           session.setLogs.some(
             (setLog) =>
@@ -120,11 +146,10 @@ export function PersistedProvider({
               setLog.setIndex === input.setIndex,
           )
         )
-          return {
-            ok: false,
-            reason: 'unavailable',
-            detail: 'That set is already logged. Edit it instead.',
-          };
+          return reject(
+            `Set ${input.setIndex + 1} logging`,
+            'That set is already logged. Edit it instead.',
+          );
         const setLog = {
           setLogId: ids.next(),
           exerciseId: input.exerciseId,
@@ -144,15 +169,19 @@ export function PersistedProvider({
               : log,
           ),
         };
-        return commit(next, `Set ${input.setIndex + 1}`);
+        const rpe = input.rpe === null ? '' : ` · RPE ${input.rpe}`;
+        return commit(
+          next,
+          `Set ${input.setIndex + 1} · ${input.weight.value} ${input.weight.unit} × ${input.reps}${rpe} was not logged.`,
+          `Set ${input.setIndex + 1} logged · ${input.weight.value} ${input.weight.unit} × ${input.reps}${rpe}`,
+        );
       },
       updateSet: (sessionLogId, setLogId, weight, reps, rpe) => {
         if (!isValidActual(weight, reps, rpe)) {
-          return {
-            ok: false,
-            reason: 'unavailable',
-            detail: 'Actual set values are outside the supported logging ranges.',
-          };
+          return reject(
+            'Set correction',
+            'Actual set values are outside the supported logging ranges.',
+          );
         }
         return commit(
           {
@@ -168,11 +197,15 @@ export function PersistedProvider({
                 : log,
             ),
           },
-          'Set correction',
+          `Set correction · ${weight.value} ${weight.unit} × ${reps}${rpe === null ? '' : ` · RPE ${rpe}`} was not saved.`,
+          `Set corrected · ${weight.value} ${weight.unit} × ${reps}${rpe === null ? '' : ` · RPE ${rpe}`}`,
         );
       },
-      deleteSet: (sessionLogId, setLogId) =>
-        commit(
+      deleteSet: (sessionLogId, setLogId) => {
+        const deleted = data.sessionLogs
+          .find((log) => log.sessionLogId === sessionLogId)
+          ?.setLogs.find((setLog) => setLog.setLogId === setLogId);
+        return commit(
           {
             ...data,
             sessionLogs: data.sessionLogs.map((log) =>
@@ -181,39 +214,99 @@ export function PersistedProvider({
                 : log,
             ),
           },
-          'Set deletion',
-        ),
-      completeSession: (sessionLogId) =>
-        commit(
+          deleted
+            ? `Set deletion · ${deleted.weight.value} ${deleted.weight.unit} × ${deleted.reps}${deleted.rpe === null ? '' : ` · RPE ${deleted.rpe}`} was not saved.`
+            : 'The logged set was not deleted.',
+          deleted
+            ? `Set deleted · ${deleted.weight.value} ${deleted.weight.unit} × ${deleted.reps}${deleted.rpe === null ? '' : ` · RPE ${deleted.rpe}`}`
+            : 'Logged set deleted.',
+        );
+      },
+      completeSession: (sessionLogId) => {
+        const completedLog = data.sessionLogs.find((log) => log.sessionLogId === sessionLogId);
+        const program = data.programs.find(
+          ({ program: candidate }) =>
+            candidate.programId === completedLog?.programId &&
+            candidate.version === completedLog.programVersion,
+        )?.program;
+        const sessionName =
+          program?.sessions.find((session) => session.sessionId === completedLog?.sessionId)
+            ?.name ??
+          completedLog?.sessionId ??
+          'Session';
+        return commit(
           {
             ...data,
             sessionLogs: data.sessionLogs.map((log) =>
               log.sessionLogId === sessionLogId ? { ...log, completedAt: clock.now() } : log,
             ),
           },
-          'Completed session',
+          `${sessionName} was not completed.`,
+          `${sessionName} completed · ${completedLog?.setLogs.length ?? 0} sets logged.`,
+        );
+      },
+      discardSession: (sessionLogId) => {
+        const discarded = data.sessionLogs.find((log) => log.sessionLogId === sessionLogId);
+        if (!discarded || discarded.completedAt !== null || discarded.setLogs.length > 0) {
+          const detail = 'Only an in-progress session with zero logged sets can be discarded.';
+          return reject('Session discard', detail);
+        }
+        const program = data.programs.find(
+          ({ program: candidate }) =>
+            candidate.programId === discarded.programId &&
+            candidate.version === discarded.programVersion,
+        )?.program;
+        const sessionName =
+          program?.sessions.find((session) => session.sessionId === discarded.sessionId)?.name ??
+          discarded.sessionId;
+        return commit(
+          {
+            ...data,
+            sessionLogs: data.sessionLogs.filter((log) => log.sessionLogId !== sessionLogId),
+          },
+          `${sessionName} was not discarded.`,
+          `${sessionName} discarded · no sets were logged.`,
+        );
+      },
+      updateSettings: (settings: Settings) =>
+        commit(
+          { ...data, settings },
+          `Settings · ${settings.defaultUnit} · ${settings.theme} theme were not updated.`,
+          `Settings updated · ${settings.defaultUnit} · ${settings.theme} theme.`,
         ),
-      updateSettings: (settings: Settings) => commit({ ...data, settings }, 'Settings'),
-      replaceData: (incoming: PersistedRoot) => commit(incoming, 'Backup restore'),
+      replaceData: (incoming: PersistedRoot) =>
+        commit(
+          incoming,
+          'The backup was not restored.',
+          `Backup restored · ${incoming.programs.length} program versions · ${incoming.sessionLogs.length} sessions.`,
+        ),
       mergeData: (incoming: PersistedRoot) => {
         const merged = mergePersistedRoots(data, incoming);
-        if (!merged.ok)
+        if (!merged.ok) {
+          const result = reject(
+            'The backup was not merged.',
+            'Merge conflicts must be resolved in the source backup. Nothing was changed.',
+          );
           return {
-            result: {
-              ok: false,
-              reason: 'unavailable',
-              detail: 'Merge conflicts must be resolved in the source backup.',
-            },
+            result,
             conflicts: merged.errors.map((error) => `${error.code}: ${error.message}`),
           };
-        return { result: commit(merged.data, 'Backup merge'), conflicts: [] };
+        }
+        return {
+          result: commit(
+            merged.data,
+            'Backup merge',
+            `Backup merged · ${merged.data.programs.length} program versions · ${merged.data.sessionLogs.length} sessions now stored.`,
+          ),
+          conflicts: [],
+        };
       },
       activeSession: () => data.sessionLogs.find((log) => log.completedAt === null) ?? null,
       usageBytes: () => adapter.usageBytes(),
       now: () => clock.now(),
       timezone: () => clock.timezone(),
     };
-  }, [adapter, clock, commit, data, failure, ids, notice]);
+  }, [adapter, clock, commit, data, failure, ids, notice, reject]);
 
   const fatal = loaded.ok
     ? null

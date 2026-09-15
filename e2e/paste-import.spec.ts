@@ -120,7 +120,7 @@ test('authoring handoff imports by paste without a download or file picker', asy
   await page.getByRole('button', { name: 'Validate pasted JSON' }).click();
   await expect(page.getByText('Ready to import')).toBeVisible();
   await page.getByRole('button', { name: 'Import program' }).click();
-  await expect(page.getByRole('heading', { name: 'Minimal Full Body' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Minimal Full Body', exact: true })).toBeVisible();
   const stored = await page.evaluate(() => globalThis.localStorage.getItem('fitness.v1.root'));
   expect(stored).toContain('minimal-full-body');
 });

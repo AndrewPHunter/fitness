@@ -9,10 +9,11 @@
   Decoration stays outside active logging controls. Amendment 003 does not state a light
   `--border-subtle`; `#D0D5DD` is used as the passive-divider counterpart to its specified
   `#667085` strong boundary.
-- **Leaving a partial session:** The data model has no abandoned status and logged sets may not be
-  deleted as a side effect. “Leave session” therefore keeps the session in progress and returns to
-  Today, where it can be resumed. This preserves every confirmed set without falsely marking the
-  workout complete or advancing the rotation.
+- **Visible feedback placement:** Amendment 005 permits adjacent, transformed, or pinned
+  confirmations but does not select one for actions that also navigate. Stored-action outcomes use
+  one pinned confirmation above the bottom navigation so the same pattern remains perceivable
+  before and after an action-driven route change. A later unrelated route change clears it; a newer
+  action replaces it.
 - **Observed frequency event:** An exercise counts once on a calendar date if at least one set was
   logged for it that day. Multiple sets in the same workout do not inflate training frequency.
 - **Import merge ordering:** Successful merges preserve current program/log order and append

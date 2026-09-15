@@ -45,6 +45,7 @@ function SetLogger({
     const weightNumber = Number(weight);
     const repsNumber = Number(reps);
     if (!(weightNumber > 0) || !Number.isInteger(repsNumber) || repsNumber < 0 || !validRpe(rpe)) {
+      store.clearMessages();
       setInputError(
         'Enter a weight above 0, whole-number reps of 0 or more, and optional RPE from 1–10 in 0.5 steps.',
       );
@@ -83,9 +84,8 @@ function SetLogger({
         <p className="eyebrow">Prescribed — reference only</p>
         <div className="cluster">
           <strong>
-            {isPerSetEntry(task.entry)
-              ? `Set ${task.setIndex + 1} of ${entrySetCount(task.entry)} · ${prescribedReps(task.prescription)} reps`
-              : `${task.entry.sets} sets × ${prescribedReps(task.prescription)} reps`}
+            Set {task.setIndex + 1} of {entrySetCount(task.entry)} ·{' '}
+            {prescribedReps(task.prescription)} reps
           </strong>
           {task.prescription.targetWeight ? (
             <span>· {formatLoad(task.prescription.targetWeight)}</span>
@@ -118,6 +118,17 @@ function SetLogger({
           </p>
         ) : null}
       </div>
+      {inputError ? (
+        <p role="alert" className="action-feedback action-feedback-failure">
+          <span className="state-symbol" aria-hidden="true">
+            !
+          </span>
+          Set not saved. {inputError}
+        </p>
+      ) : null}
+      <Button wide onClick={confirm}>
+        Log set
+      </Button>
       <div className={`actual-fields${prefill && !touched ? ' prefilled' : ''}`}>
         <FormField label={`Weight (${unit})`} htmlFor="actual-weight">
           <Input
@@ -182,17 +193,6 @@ function SetLogger({
           <option value="lb">lb</option>
         </select>
       </div>
-      {inputError ? (
-        <p role="alert" className="action-feedback action-feedback-failure">
-          <span className="state-symbol" aria-hidden="true">
-            !
-          </span>
-          Set not saved. {inputError}
-        </p>
-      ) : null}
-      <Button wide onClick={confirm}>
-        Log set
-      </Button>
     </section>
   );
 }
@@ -258,6 +258,7 @@ function LoggedSetEditor({
               repsValue < 0 ||
               !validRpe(rpe)
             ) {
+              store.clearMessages();
               setInputError(
                 'Enter a weight above 0, whole-number reps of 0 or more, and optional RPE from 1–10 in 0.5 steps.',
               );
@@ -329,7 +330,18 @@ export function ActiveSessionPage({ store }: { store: AppStore }) {
   const progress = plan.length === 0 ? 0 : (log.setLogs.length / plan.length) * 100;
   const complete = () => {
     const result = store.completeSession(log.sessionLogId);
-    if (result.ok) navigate('/');
+    if (result.ok) navigate('/', { state: { preserveFeedback: true } });
+  };
+  const leaveOrDiscard = () => {
+    if (log.setLogs.length === 0) {
+      const result = store.discardSession(log.sessionLogId);
+      if (result.ok) navigate('/', { state: { preserveFeedback: true } });
+      return;
+    }
+    store.announce(
+      `${session.name} left open · ${log.setLogs.length} logged set${log.setLogs.length === 1 ? '' : 's'} kept.`,
+    );
+    navigate('/', { state: { preserveFeedback: true } });
   };
   return (
     <main className="page">
@@ -341,8 +353,11 @@ export function ActiveSessionPage({ store }: { store: AppStore }) {
             </p>
             <h1>{session.name}</h1>
           </div>
-          <Button variant="ghost" onClick={() => setLeaving(true)}>
-            Leave
+          <Button
+            variant={log.setLogs.length === 0 ? 'danger' : 'ghost'}
+            onClick={() => setLeaving(true)}
+          >
+            {log.setLogs.length === 0 ? 'Discard' : 'Leave'}
           </Button>
         </div>
         <div
@@ -434,10 +449,15 @@ export function ActiveSessionPage({ store }: { store: AppStore }) {
       </div>
       {leaving ? (
         <ConfirmDialog
-          title="Leave this session open?"
-          description={`All ${log.setLogs.length} confirmed sets will stay saved. The session will remain in progress and Today will offer Resume; the rotation will not advance.`}
-          confirmLabel="Leave and keep sets"
-          onConfirm={() => navigate('/')}
+          destructive={log.setLogs.length === 0}
+          title={log.setLogs.length === 0 ? `Discard ${session.name}?` : 'Leave this session open?'}
+          description={
+            log.setLogs.length === 0
+              ? 'No sets have been logged. This removes the empty session and does not advance the program rotation.'
+              : `All ${log.setLogs.length} confirmed sets will stay saved. The session will remain in progress and Today will offer Resume; the rotation will not advance.`
+          }
+          confirmLabel={log.setLogs.length === 0 ? 'Discard empty session' : 'Leave and keep sets'}
+          onConfirm={leaveOrDiscard}
           onCancel={() => setLeaving(false)}
         />
       ) : null}
