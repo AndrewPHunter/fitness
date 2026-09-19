@@ -62,7 +62,16 @@ test('the empty-storage core loop keeps every outcome and next step perceivable'
   await expectPerceivable(
     page.locator('.global-feedback-success').filter({ hasText: 'Minimal Full Body v1 imported.' }),
   );
-  await expectPerceivable(page.getByRole('button', { name: 'Clear pasted JSON' }));
+  const clearAfterImport = page.getByRole('button', { name: 'Clear pasted JSON' });
+  await expectPerceivable(clearAfterImport);
+  const importNoticeBox = await page
+    .locator('.global-feedback-success')
+    .filter({ hasText: 'Minimal Full Body v1 imported.' })
+    .boundingBox();
+  const clearAfterImportBox = await clearAfterImport.boundingBox();
+  expect((clearAfterImportBox?.y ?? 0) + (clearAfterImportBox?.height ?? 0)).toBeLessThanOrEqual(
+    importNoticeBox?.y ?? 0,
+  );
   await expect(page.locator('.visually-hidden[aria-live="polite"]')).toContainText(
     'Minimal Full Body v1 imported.',
   );
@@ -295,7 +304,9 @@ test('settings, exports, restore and merge confirm honestly and clear on navigat
   );
 });
 
-test('Log set remains above the focused inputs in the keyboard-height proxy', async ({ page }) => {
+test('Log set stays beneath the inputs and reachable in the keyboard-height proxy', async ({
+  page,
+}) => {
   await pasteImportAndActivate(page);
   await page.getByRole('button', { name: 'Start Full Body' }).click();
   const started = page
@@ -305,7 +316,17 @@ test('Log set remains above the focused inputs in the keyboard-height proxy', as
   await expectPerceivable(started);
   await page.getByRole('link', { name: 'Today', exact: true }).click();
   await page.getByRole('link', { name: /Resume/u }).click();
+  const logSet = page.getByRole('button', { name: 'Log set' });
+  await expectPerceivable(logSet);
   await page.setViewportSize({ width: 390, height: 500 });
   await page.locator('#actual-weight').focus();
-  await expectPerceivable(page.getByRole('button', { name: 'Log set' }));
+  await page.waitForTimeout(400);
+  const weight = page.locator('#actual-weight');
+  const skip = page.getByRole('button', { name: /Skip .* for this workout/u });
+  await expectPerceivable(logSet);
+  const weightBox = await weight.boundingBox();
+  const logBox = await logSet.boundingBox();
+  const skipBox = await skip.boundingBox();
+  expect(logBox?.y).toBeGreaterThanOrEqual((weightBox?.y ?? 0) + (weightBox?.height ?? 0));
+  expect(skipBox?.y).toBeLessThan(weightBox?.y ?? 0);
 });

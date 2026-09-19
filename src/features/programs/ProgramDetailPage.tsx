@@ -1,6 +1,7 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { entryPrescriptionSummary } from '../../domain/program/prescription';
 import { nextSession } from '../../domain/schedule/nextSession';
+import { orderedSessionBlocks } from '../../domain/session/plannedSets';
 import type { AppStore } from '../../domain/state/appStore';
 import { Badge } from '../../ui/atoms/Badge';
 import { Button } from '../../ui/atoms/Button';
@@ -61,18 +62,33 @@ export function ProgramDetailPage({ store }: { store: AppStore }) {
       </header>
       <section className="stack">
         <h2>Sessions</h2>
-        {program.sessions.map((session) => (
-          <article className="surface stack" key={session.sessionId}>
-            <div>
-              <p className="exercise-id">{session.sessionId}</p>
-              <h3>{session.name}</h3>
-            </div>
-            {session.notes ? <p className="muted">{session.notes}</p> : null}
-            <ul className="summary-list">
-              {session.blocks
-                .flatMap((block) => (block.type === 'single' ? [block.entry] : block.entries))
-                .map((entry, index) => (
-                  <li key={`${entry.exerciseId}-${index}`}>
+        {program.sessions.map((session) => {
+          const savedOrder = store.data.workoutOrders.find(
+            (candidate) =>
+              candidate.programId === program.programId &&
+              candidate.programVersion === program.version &&
+              candidate.sessionId === session.sessionId,
+          );
+          const entries = orderedSessionBlocks(session, savedOrder?.blockOrder).flatMap(
+            ({ block, blockIndex }) =>
+              (block.type === 'single' ? [block.entry] : block.entries).map(
+                (entry, entryIndex) => ({
+                  entry,
+                  key: `${blockIndex}:${entryIndex}`,
+                }),
+              ),
+          );
+          return (
+            <article className="surface stack" key={session.sessionId}>
+              <div>
+                <p className="exercise-id">{session.sessionId}</p>
+                <h3>{session.name}</h3>
+              </div>
+              {session.notes ? <p className="muted">{session.notes}</p> : null}
+              {savedOrder ? <p className="exercise-id">Your saved routine order</p> : null}
+              <ul className="summary-list">
+                {entries.map(({ entry, key }) => (
+                  <li key={key}>
                     <span>
                       {
                         program.exercises.find(
@@ -83,9 +99,10 @@ export function ProgramDetailPage({ store }: { store: AppStore }) {
                     <strong>{entryPrescriptionSummary(entry)}</strong>
                   </li>
                 ))}
-            </ul>
-          </article>
-        ))}
+              </ul>
+            </article>
+          );
+        })}
       </section>
     </main>
   );

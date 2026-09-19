@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { entryPrescriptionSummary } from '../../domain/program/prescription';
 import { nextSession } from '../../domain/schedule/nextSession';
+import { orderedSessionBlocks } from '../../domain/session/plannedSets';
 import type { AppStore } from '../../domain/state/appStore';
 import { Badge } from '../../ui/atoms/Badge';
 import { Button } from '../../ui/atoms/Button';
@@ -73,6 +74,12 @@ export function TodayPage({ store }: { store: AppStore }) {
           program.programId === activeLog.programId && program.version === activeLog.programVersion,
       )?.program
     : null;
+  const nextOrder = store.data.workoutOrders.find(
+    (candidate) =>
+      candidate.programId === active.programId &&
+      candidate.programVersion === active.version &&
+      candidate.sessionId === next.session.sessionId,
+  );
   const start = () => {
     const result = store.startSession(next.session.sessionId);
     if (result.ok) navigate('/session/active', { state: { preserveFeedback: true } });
@@ -129,23 +136,26 @@ export function TodayPage({ store }: { store: AppStore }) {
             <h2>{next.session.name}</h2>
             {next.session.notes ? <p>{next.session.notes}</p> : null}
           </div>
+          {nextOrder ? <p className="exercise-id">Your saved routine order</p> : null}
           <div className="session-prescription">
-            {next.session.blocks.map((block, blockIndex) => (
-              <div className="prescription-row" key={`${block.type}-${blockIndex}`}>
-                <span>
-                  {block.type === 'superset'
-                    ? `Superset · ${block.entries.length} exercises`
-                    : active.exercises.find(
-                        (exercise) => exercise.exerciseId === block.entry.exerciseId,
-                      )?.name}
-                </span>
-                <strong>
-                  {block.type === 'single'
-                    ? entryPrescriptionSummary(block.entry)
-                    : block.entries.map(entryPrescriptionSummary).join(' / ')}
-                </strong>
-              </div>
-            ))}
+            {orderedSessionBlocks(next.session, nextOrder?.blockOrder).map(
+              ({ block, blockIndex }) => (
+                <div className="prescription-row" key={`${block.type}-${blockIndex}`}>
+                  <span>
+                    {block.type === 'superset'
+                      ? `Superset · ${block.entries.length} exercises`
+                      : active.exercises.find(
+                          (exercise) => exercise.exerciseId === block.entry.exerciseId,
+                        )?.name}
+                  </span>
+                  <strong>
+                    {block.type === 'single'
+                      ? entryPrescriptionSummary(block.entry)
+                      : block.entries.map(entryPrescriptionSummary).join(' / ')}
+                  </strong>
+                </div>
+              ),
+            )}
           </div>
           <Button wide onClick={start}>
             Start session

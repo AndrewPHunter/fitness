@@ -4,8 +4,9 @@ import {
   CURRENT_SCHEMA_VERSION,
   migrateV0ToCurrent,
   migrateV1ToCurrent,
+  migrateV2ToCurrent,
 } from '../migration/migrate';
-import type { PersistedRootV0, PersistedRootV1 } from '../migration/migrations';
+import type { PersistedRootV0, PersistedRootV1, PersistedRootV2 } from '../migration/migrations';
 import type { PersistedRoot, ValidationError } from '../program/types';
 import { validateSemantics } from '../program/validateSemantics';
 
@@ -103,6 +104,22 @@ const sessionLogSchema = {
   },
 };
 
+const workoutOrderSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['programId', 'programVersion', 'sessionId', 'blockOrder'],
+  properties: {
+    programId: { type: 'string', pattern: '^[a-z0-9]+(-[a-z0-9]+)*$' },
+    programVersion: { type: 'integer', minimum: 1 },
+    sessionId: { type: 'string', pattern: '^[a-z0-9]+(-[a-z0-9]+)*$' },
+    blockOrder: {
+      type: 'array',
+      items: { type: 'integer', minimum: 0 },
+      uniqueItems: true,
+    },
+  },
+};
+
 const commonProperties = {
   programs: { type: 'array', items: storedProgramSchema },
   activeProgram: {
@@ -122,7 +139,35 @@ const commonProperties = {
 };
 
 export const persistedRootSchema = {
-  $id: 'fitness-persisted-root-v2',
+  $id: 'fitness-persisted-root-v3',
+  type: 'object',
+  additionalProperties: false,
+  required: [
+    'schemaVersion',
+    'programs',
+    'sessionLogs',
+    'workoutOrders',
+    'settings',
+    'activeProgram',
+  ],
+  properties: {
+    schemaVersion: { const: 3 },
+    ...commonProperties,
+    sessionLogs: { type: 'array', items: sessionLogSchema },
+    workoutOrders: { type: 'array', items: workoutOrderSchema },
+    settings: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['defaultUnit', 'theme'],
+      properties: {
+        defaultUnit: { enum: ['kg', 'lb'] },
+        theme: { enum: ['system', 'light', 'dark'] },
+      },
+    },
+  },
+};
+
+const persistedRootV2Schema = {
   type: 'object',
   additionalProperties: false,
   required: ['schemaVersion', 'programs', 'sessionLogs', 'settings', 'activeProgram'],
@@ -176,6 +221,7 @@ const persistedRootV0Schema = {
 const ajv = new Ajv2020({ allErrors: true, strict: true });
 ajv.addSchema(programSchema);
 const validateCurrent = ajv.compile<PersistedRoot>(persistedRootSchema);
+const validateV2 = ajv.compile<PersistedRootV2>(persistedRootV2Schema);
 const validateV1 = ajv.compile<PersistedRootV1>(persistedRootV1Schema);
 const validateV0 = ajv.compile<PersistedRootV0>(persistedRootV0Schema);
 
@@ -296,6 +342,43 @@ function integrityErrors(root: PersistedRoot): ValidationError[] {
         });
     });
   });
+  const workoutOrderIds = new Set<string>();
+  root.workoutOrders.forEach((workoutOrder, orderIndex) => {
+    const identity = `${workoutOrder.programId}@${workoutOrder.programVersion}/${workoutOrder.sessionId}`;
+    if (workoutOrderIds.has(identity))
+      errors.push({
+        layer: 'semantic',
+        code: 'DATA_DUPLICATE_WORKOUT_ORDER',
+        path: `/data/workoutOrders/${orderIndex}`,
+        message: `Workout order ${identity} occurs more than once.`,
+      });
+    workoutOrderIds.add(identity);
+    const program = programs.get(`${workoutOrder.programId}@${workoutOrder.programVersion}`);
+    const session = program?.sessions.find(
+      (candidate) => candidate.sessionId === workoutOrder.sessionId,
+    );
+    if (!program || !session) {
+      errors.push({
+        layer: 'semantic',
+        code: 'DATA_WORKOUT_ORDER_REFERENCE',
+        path: `/data/workoutOrders/${orderIndex}`,
+        message: `Workout order must reference a session in its exact program version.`,
+      });
+      return;
+    }
+    const expected = session.blocks.map((_, blockIndex) => blockIndex);
+    const actual = [...workoutOrder.blockOrder].sort((left, right) => left - right);
+    if (
+      actual.length !== expected.length ||
+      actual.some((blockIndex, index) => blockIndex !== expected[index])
+    )
+      errors.push({
+        layer: 'semantic',
+        code: 'DATA_WORKOUT_ORDER_BLOCKS',
+        path: `/data/workoutOrders/${orderIndex}/blockOrder`,
+        message: `Workout order must include every session block exactly once.`,
+      });
+  });
   if (
     root.activeProgram &&
     !programs.has(`${root.activeProgram.programId}@${root.activeProgram.version}`)
@@ -361,6 +444,10 @@ export function decodePersistedRoot(value: unknown): RootDecodeResult {
     if (!validateV1(value)) return { ok: false, errors: errorsFromAjv(validateV1.errors) };
     root = migrateV1ToCurrent(value);
     migrated = true;
+  } else if (version === 2) {
+    if (!validateV2(value)) return { ok: false, errors: errorsFromAjv(validateV2.errors) };
+    root = migrateV2ToCurrent(value);
+    migrated = true;
   } else {
     if (!validateCurrent(value))
       return { ok: false, errors: errorsFromAjv(validateCurrent.errors) };
@@ -375,6 +462,7 @@ export function freshRoot(): PersistedRoot {
     schemaVersion: CURRENT_SCHEMA_VERSION,
     programs: [],
     sessionLogs: [],
+    workoutOrders: [],
     settings: { defaultUnit: 'kg', theme: 'system' },
     activeProgram: null,
   };

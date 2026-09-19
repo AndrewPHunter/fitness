@@ -1,5 +1,5 @@
 import type { Session } from '../program/types';
-import { plannedSets } from './plannedSets';
+import { orderedPlannedSets, plannedSets } from './plannedSets';
 
 describe('planned sets', () => {
   it('keeps scalar entries unchanged', () => {
@@ -52,6 +52,36 @@ describe('planned sets', () => {
       { exerciseId: 'movement-a', setIndex: 1, reps: 7 },
       { exerciseId: 'movement-b', setIndex: 1, reps: 10, repsMax: 12 },
       { exerciseId: 'movement-a', setIndex: 2, reps: 9, targetRpe: 9 },
+    ]);
+  });
+
+  it('reorders whole blocks while preserving superset round-robin order', () => {
+    const session: Session = {
+      sessionId: 'reordered-day',
+      name: 'Reordered day',
+      blocks: [
+        { type: 'single', entry: { exerciseId: 'movement-a', sets: 2, reps: 5 } },
+        {
+          type: 'superset',
+          entries: [
+            { exerciseId: 'movement-b', sets: 2, reps: 8 },
+            { exerciseId: 'movement-c', sets: 2, reps: 10 },
+          ],
+        },
+      ],
+    };
+
+    expect(
+      orderedPlannedSets(session, [1, 0]).map(
+        ({ entry, setIndex }) => `${entry.exerciseId}:${setIndex}`,
+      ),
+    ).toEqual([
+      'movement-b:0',
+      'movement-c:0',
+      'movement-b:1',
+      'movement-c:1',
+      'movement-a:0',
+      'movement-a:1',
     ]);
   });
 });

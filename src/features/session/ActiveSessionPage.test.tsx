@@ -126,6 +126,31 @@ it('lets the user switch exercises without losing the authored default order', a
   expect(screen.getByText('Set 2 of 2 · 6 reps')).toBeVisible();
 });
 
+it('saves a reordered routine and uses it as the default flow', async () => {
+  const user = userEvent.setup();
+  const adapter = renderApp(activeFixtureRoot());
+  expect(screen.getByRole('heading', { level: 2, name: 'Back Squat' })).toBeVisible();
+
+  await user.click(screen.getByRole('button', { name: 'Switch' }));
+  await user.click(screen.getByRole('button', { name: 'Move Bench Press up' }));
+  expect(screen.getByText('Bench Press is now 1 of 3. Order saved.')).toBeVisible();
+  await user.click(screen.getByRole('button', { name: 'Close' }));
+
+  expect(screen.getByRole('heading', { level: 2, name: 'Bench Press' })).toBeVisible();
+  const raw = adapter.raw();
+  const saved: unknown = raw ? JSON.parse(raw) : null;
+  expect(saved).toMatchObject({
+    workoutOrders: [
+      {
+        programId: rangeAndPerSetProgram.programId,
+        programVersion: rangeAndPerSetProgram.version,
+        sessionId: 'a-top-set',
+        blockOrder: [1, 0, 2],
+      },
+    ],
+  });
+});
+
 it('completes a workout after one exercise is explicitly skipped', async () => {
   const user = userEvent.setup();
   const adapter = renderApp(activeRoot());

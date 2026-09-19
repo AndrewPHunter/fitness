@@ -1,5 +1,5 @@
 import { entrySetCount, prescriptionAt } from '../program/prescription';
-import type { ExerciseEntry, PerSetPrescription, Session } from '../program/types';
+import type { Block, ExerciseEntry, PerSetPrescription, Session } from '../program/types';
 
 export interface PlannedSet {
   blockIndex: number;
@@ -39,6 +39,41 @@ export function plannedSets(session: Session): PlannedSet[] {
       ),
     ).flat();
   });
+}
+
+export function authoredBlockOrder(session: Session): number[] {
+  return session.blocks.map((_, blockIndex) => blockIndex);
+}
+
+function resolvedBlockOrder(session: Session, blockOrder?: number[]): number[] {
+  const authored = authoredBlockOrder(session);
+  const validOrder =
+    blockOrder?.length === authored.length &&
+    new Set(blockOrder).size === authored.length &&
+    blockOrder.every((blockIndex) => authored.includes(blockIndex));
+  return validOrder ? blockOrder : authored;
+}
+
+export function orderedSessionBlocks(
+  session: Session,
+  blockOrder?: number[],
+): { block: Block; blockIndex: number }[] {
+  return resolvedBlockOrder(session, blockOrder).flatMap((blockIndex) => {
+    const block = session.blocks[blockIndex];
+    return block ? [{ block, blockIndex }] : [];
+  });
+}
+
+export function orderedPlannedSets(session: Session, blockOrder?: number[]): PlannedSet[] {
+  const byBlock = new Map<number, PlannedSet[]>();
+  plannedSets(session).forEach((set) => {
+    const block = byBlock.get(set.blockIndex) ?? [];
+    block.push(set);
+    byBlock.set(set.blockIndex, block);
+  });
+  return resolvedBlockOrder(session, blockOrder).flatMap(
+    (blockIndex) => byBlock.get(blockIndex) ?? [],
+  );
 }
 
 export function plannedSetKey(

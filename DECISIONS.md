@@ -23,6 +23,11 @@
   program's block order and superset round-robin order. Choosing an exercise temporarily selects
   its next unlogged set; after that exercise is finished, the default order resumes. This keeps
   authored structure visible while allowing the user to work around equipment and availability.
+- **Saved routine order is a per-version, per-day preference:** Reordering a workout saves a block
+  order for that exact program version and session, so it survives reloads and applies the next
+  time that workout day starts without mutating the imported program. Supersets move as one block
+  and retain round-robin logging; jumping to an individual exercise remains temporary and does not
+  rewrite the saved order.
 - **Observed frequency event:** An exercise counts once on a calendar date if at least one set was
   logged for it that day. Multiple sets in the same workout do not inflate training frequency.
 - **Import merge ordering:** Successful merges preserve current program/log order and append
