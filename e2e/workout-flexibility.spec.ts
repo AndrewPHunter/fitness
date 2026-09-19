@@ -107,14 +107,26 @@ test('the exercise switcher stays one-hand reachable without horizontal overflow
 
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
   const chooser = page.getByRole('dialog', { name: 'Choose an exercise' });
-  const current = chooser.getByRole('button', { name: /Back Squat.*Current/u });
-  await expect(current).toBeFocused();
+  const chooserTitle = chooser.getByRole('heading', { name: 'Choose an exercise' });
+  await expect(chooserTitle).toBeFocused();
+  expect(await chooser.evaluate((element) => element.scrollTop)).toBe(0);
   await page.keyboard.press('Escape');
   await expect(chooser).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Switch' })).toBeFocused();
+  await page.setViewportSize({ width: 390, height: 500 });
   await page.getByRole('button', { name: 'Switch' }).click();
 
   const reopened = page.getByRole('dialog', { name: 'Choose an exercise' });
+  await expect(reopened.getByRole('heading', { name: 'Choose an exercise' })).toBeFocused();
+  expect(await reopened.evaluate((element) => element.scrollTop)).toBe(0);
+  const titleBox = await reopened
+    .getByRole('heading', { name: 'Choose an exercise' })
+    .boundingBox();
+  const navigationBox = await page
+    .getByRole('navigation', { name: 'Main navigation' })
+    .boundingBox();
+  expect(titleBox?.y).toBeGreaterThanOrEqual(0);
+  expect((titleBox?.y ?? 0) + (titleBox?.height ?? 0)).toBeLessThan(navigationBox?.y ?? 0);
   const targets = reopened.getByRole('button');
   for (let index = 0; index < (await targets.count()); index += 1) {
     const box = await targets.nth(index).boundingBox();

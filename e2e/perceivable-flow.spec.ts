@@ -62,7 +62,16 @@ test('the empty-storage core loop keeps every outcome and next step perceivable'
   await expectPerceivable(
     page.locator('.global-feedback-success').filter({ hasText: 'Minimal Full Body v1 imported.' }),
   );
-  await expectPerceivable(page.getByRole('button', { name: 'Clear pasted JSON' }));
+  const clearAfterImport = page.getByRole('button', { name: 'Clear pasted JSON' });
+  await expectPerceivable(clearAfterImport);
+  const importNoticeBox = await page
+    .locator('.global-feedback-success')
+    .filter({ hasText: 'Minimal Full Body v1 imported.' })
+    .boundingBox();
+  const clearAfterImportBox = await clearAfterImport.boundingBox();
+  expect((clearAfterImportBox?.y ?? 0) + (clearAfterImportBox?.height ?? 0)).toBeLessThanOrEqual(
+    importNoticeBox?.y ?? 0,
+  );
   await expect(page.locator('.visually-hidden[aria-live="polite"]')).toContainText(
     'Minimal Full Body v1 imported.',
   );
@@ -307,11 +316,12 @@ test('Log set stays beneath the inputs and reachable in the keyboard-height prox
   await expectPerceivable(started);
   await page.getByRole('link', { name: 'Today', exact: true }).click();
   await page.getByRole('link', { name: /Resume/u }).click();
+  const logSet = page.getByRole('button', { name: 'Log set' });
+  await expectPerceivable(logSet);
   await page.setViewportSize({ width: 390, height: 500 });
   await page.locator('#actual-weight').focus();
   await page.waitForTimeout(400);
   const weight = page.locator('#actual-weight');
-  const logSet = page.getByRole('button', { name: 'Log set' });
   const skip = page.getByRole('button', { name: /Skip .* for this workout/u });
   await expectPerceivable(logSet);
   const weightBox = await weight.boundingBox();

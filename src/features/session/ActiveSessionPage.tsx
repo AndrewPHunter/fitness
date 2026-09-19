@@ -95,8 +95,9 @@ function ExercisePickerDialog({
             ...node.querySelectorAll<HTMLElement>('button:not([disabled]), [href], [tabindex]'),
           ].filter((element) => element.tabIndex >= 0)
         : [];
-    const autofocus = node?.querySelector<HTMLElement>('[data-dialog-autofocus]');
-    (autofocus ?? focusable()[0])?.focus();
+    const heading = node?.querySelector<HTMLElement>('#exercise-picker-title');
+    if (node) node.scrollTop = 0;
+    (heading ?? focusable()[0])?.focus({ preventScroll: true });
     const keepFocusInside = (event: FocusEvent) => {
       if (node && event.target instanceof Node && !node.contains(event.target)) {
         focusable()[0]?.focus();
@@ -159,7 +160,9 @@ function ExercisePickerDialog({
         aria-describedby="exercise-picker-description"
       >
         <div className="stack">
-          <h2 id="exercise-picker-title">Choose an exercise</h2>
+          <h2 id="exercise-picker-title" tabIndex={-1}>
+            Choose an exercise
+          </h2>
           <p id="exercise-picker-description" className="muted">
             Jump to any exercise now, or adjust the saved routine order for this workout day.
           </p>
@@ -235,7 +238,6 @@ function ExercisePickerDialog({
                   className="exercise-choice-button"
                   type="button"
                   aria-current={active ? 'true' : undefined}
-                  data-dialog-autofocus={active ? '' : undefined}
                   disabled={complete || skipped}
                   onClick={() => onSelect(key)}
                 >
@@ -669,7 +671,7 @@ export function ActiveSessionPage({ store }: { store: AppStore }) {
     navigate('/', { state: { preserveFeedback: true } });
   };
   return (
-    <main className="page">
+    <main className="page active-session-page">
       <header className="page-header">
         <div className="spread">
           <div>

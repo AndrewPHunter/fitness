@@ -1,14 +1,7 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { DataPage } from '../features/data/DataPage';
-import { AuthorPage } from '../features/authoring/AuthorPage';
-import { ExerciseHistoryPage } from '../features/history/ExerciseHistoryPage';
-import { HistoryPage } from '../features/history/HistoryPage';
-import { ProgramDetailPage } from '../features/programs/ProgramDetailPage';
-import { ProgramsPage } from '../features/programs/ProgramsPage';
 import { ActiveSessionPage } from '../features/session/ActiveSessionPage';
 import { TodayPage } from '../features/session/TodayPage';
-import { SettingsPage } from '../features/settings/SettingsPage';
 import { PwaUpdateNotice } from '../features/pwa/PwaUpdateNotice';
 import { usePwa } from '../features/pwa/usePwa';
 import { downloadText } from '../platform/files/files';
@@ -20,6 +13,35 @@ import { AppShell } from '../ui/templates/AppShell';
 import { usePersistedStore } from './PersistedProvider';
 
 const pwaAdapter = createBrowserPwaAdapter();
+const AuthorPage = lazy(async () => ({
+  default: (await import('../features/authoring/AuthorPage')).AuthorPage,
+}));
+const DataPage = lazy(async () => ({
+  default: (await import('../features/data/DataPage')).DataPage,
+}));
+const ExerciseHistoryPage = lazy(async () => ({
+  default: (await import('../features/history/ExerciseHistoryPage')).ExerciseHistoryPage,
+}));
+const HistoryPage = lazy(async () => ({
+  default: (await import('../features/history/HistoryPage')).HistoryPage,
+}));
+const ProgramDetailPage = lazy(async () => ({
+  default: (await import('../features/programs/ProgramDetailPage')).ProgramDetailPage,
+}));
+const ProgramsPage = lazy(async () => ({
+  default: (await import('../features/programs/ProgramsPage')).ProgramsPage,
+}));
+const SettingsPage = lazy(async () => ({
+  default: (await import('../features/settings/SettingsPage')).SettingsPage,
+}));
+
+function RouteFallback() {
+  return (
+    <main className="page route-loading" aria-busy="true">
+      <p>Opening local screen…</p>
+    </main>
+  );
+}
 
 export function ActionFeedback({
   store,
@@ -122,7 +144,7 @@ export function App() {
   }, [store]);
   if (fatal)
     return (
-      <main className="page">
+      <main className="page standalone-page">
         <section className="error-panel" role="alert">
           <p className="eyebrow">Storage locked</p>
           <h1>Your training data could not be opened.</h1>
@@ -146,7 +168,7 @@ export function App() {
     );
   if (!store)
     return (
-      <main className="page">
+      <main className="page standalone-page">
         <p>Loading local training data…</p>
       </main>
     );
@@ -157,30 +179,35 @@ export function App() {
         state={pwaState}
         sessionInProgress={store.activeSession() !== null}
       />
-      <Routes>
-        <Route path="/" element={<TodayPage store={store} />} />
-        <Route
-          path="/author"
-          element={
-            <AuthorPage
-              programs={store.data.programs}
-              clipboard={clipboard}
-              download={downloadText}
-            />
-          }
-        />
-        <Route path="/programs" element={<ProgramsPage store={store} />} />
-        <Route path="/programs/:programId/:version" element={<ProgramDetailPage store={store} />} />
-        <Route path="/session/active" element={<ActiveSessionPage store={store} />} />
-        <Route path="/history" element={<HistoryPage store={store} />} />
-        <Route path="/history/:exerciseId" element={<ExerciseHistoryPage store={store} />} />
-        <Route path="/data" element={<DataPage store={store} />} />
-        <Route
-          path="/settings"
-          element={<SettingsPage store={store} pwaAdapter={pwaAdapter} pwaState={pwaState} />}
-        />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
+          <Route path="/" element={<TodayPage store={store} />} />
+          <Route
+            path="/author"
+            element={
+              <AuthorPage
+                programs={store.data.programs}
+                clipboard={clipboard}
+                download={downloadText}
+              />
+            }
+          />
+          <Route path="/programs" element={<ProgramsPage store={store} />} />
+          <Route
+            path="/programs/:programId/:version"
+            element={<ProgramDetailPage store={store} />}
+          />
+          <Route path="/session/active" element={<ActiveSessionPage store={store} />} />
+          <Route path="/history" element={<HistoryPage store={store} />} />
+          <Route path="/history/:exerciseId" element={<ExerciseHistoryPage store={store} />} />
+          <Route path="/data" element={<DataPage store={store} />} />
+          <Route
+            path="/settings"
+            element={<SettingsPage store={store} pwaAdapter={pwaAdapter} pwaState={pwaState} />}
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
       <ActionFeedback store={store} />
     </AppShell>
   );
