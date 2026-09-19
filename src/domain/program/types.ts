@@ -96,6 +96,13 @@ export interface SessionLog {
   notes?: string;
 }
 
+export interface WorkoutOrder {
+  programId: string;
+  programVersion: number;
+  sessionId: string;
+  blockOrder: number[];
+}
+
 export interface StoredProgram {
   program: Program;
   importedAt: string;
@@ -110,6 +117,7 @@ export interface PersistedRoot {
   schemaVersion: number;
   programs: StoredProgram[];
   sessionLogs: SessionLog[];
+  workoutOrders: WorkoutOrder[];
   settings: Settings;
   activeProgram: { programId: string; version: number } | null;
 }

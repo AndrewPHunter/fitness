@@ -9,9 +9,10 @@ import {
 import { entrySetCount, isPerSetEntry, prescribedReps } from '../../domain/program/prescription';
 import type { ExerciseEntry, Load, Session, SetLog } from '../../domain/program/types';
 import {
+  authoredBlockOrder,
+  orderedPlannedSets,
   plannedEntryKey,
   plannedSetKey,
-  plannedSets,
   type PlannedSet,
 } from '../../domain/session/plannedSets';
 import type { AppStore, ExercisePosition } from '../../domain/state/appStore';
@@ -20,6 +21,7 @@ import { Button } from '../../ui/atoms/Button';
 import { Input } from '../../ui/atoms/Input';
 import { FormField } from '../../ui/molecules/FormField';
 import { ConfirmDialog } from '../../ui/organisms/ConfirmDialog';
+import { keepControlReachable, resetPagePosition } from '../../platform/dom/keepControlReachable';
 
 function validRpe(value: string): boolean {
   if (value === '') return true;
@@ -36,8 +38,11 @@ interface SessionMovement extends ExercisePosition {
 function sessionMovements(
   session: Session,
   exerciseName: (exerciseId: string) => string,
+  blockOrder: number[],
 ): SessionMovement[] {
-  return session.blocks.flatMap<SessionMovement>((block, blockIndex) => {
+  return blockOrder.flatMap<SessionMovement>((blockIndex) => {
+    const block = session.blocks[blockIndex];
+    if (!block) return [];
     if (block.type === 'single')
       return [
         {
@@ -62,6 +67,8 @@ function sessionMovements(
 
 function ExercisePickerDialog({
   movements,
+  session,
+  blockOrder,
   log,
   selectedKey,
   store,
@@ -69,6 +76,8 @@ function ExercisePickerDialog({
   onClose,
 }: {
   movements: SessionMovement[];
+  session: Session;
+  blockOrder: number[];
   log: NonNullable<ReturnType<AppStore['activeSession']>>;
   selectedKey: string | null;
   store: AppStore;
@@ -76,6 +85,7 @@ function ExercisePickerDialog({
   onClose(): void;
 }) {
   const dialog = useRef<HTMLElement>(null);
+  const [orderFeedback, setOrderFeedback] = useState('');
   useEffect(() => {
     const invoker = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const node = dialog.current;
@@ -85,7 +95,8 @@ function ExercisePickerDialog({
             ...node.querySelectorAll<HTMLElement>('button:not([disabled]), [href], [tabindex]'),
           ].filter((element) => element.tabIndex >= 0)
         : [];
-    focusable()[0]?.focus();
+    const autofocus = node?.querySelector<HTMLElement>('[data-dialog-autofocus]');
+    (autofocus ?? focusable()[0])?.focus();
     const keepFocusInside = (event: FocusEvent) => {
       if (node && event.target instanceof Node && !node.contains(event.target)) {
         focusable()[0]?.focus();
@@ -119,6 +130,24 @@ function ExercisePickerDialog({
     };
   }, [onClose]);
 
+  const moveBlock = (position: number, direction: -1 | 1) => {
+    const destination = position + direction;
+    const movedBlockIndex = blockOrder[position];
+    if (movedBlockIndex === undefined || destination < 0 || destination >= blockOrder.length)
+      return;
+    const next = [...blockOrder];
+    next.splice(position, 1);
+    next.splice(destination, 0, movedBlockIndex);
+    const result = store.reorderWorkout(log.sessionLogId, next, movedBlockIndex);
+    if (!result.ok) return;
+    const names = movements
+      .filter((movement) => movement.blockIndex === movedBlockIndex)
+      .map((movement) => movement.name);
+    setOrderFeedback(
+      `${names.join(' + ')} is now ${destination + 1} of ${blockOrder.length}. Order saved.`,
+    );
+  };
+
   return (
     <div className="dialog-backdrop" role="presentation">
       <section
@@ -132,7 +161,65 @@ function ExercisePickerDialog({
         <div className="stack">
           <h2 id="exercise-picker-title">Choose an exercise</h2>
           <p id="exercise-picker-description" className="muted">
-            Work in any order. The program order remains the default.
+            Jump to any exercise now, or adjust the saved routine order for this workout day.
+          </p>
+        </div>
+        <section className="routine-order-section" aria-labelledby="routine-order-title">
+          <div className="stack routine-order-heading">
+            <h3 id="routine-order-title">Routine order</h3>
+            <p className="muted">Supersets move together and keep their round-robin order.</p>
+          </div>
+          <ol className="routine-order-list">
+            {blockOrder.map((blockIndex, position) => {
+              const block = session.blocks[blockIndex];
+              const names = movements
+                .filter((movement) => movement.blockIndex === blockIndex)
+                .map((movement) => movement.name);
+              const label = names.join(' + ');
+              return (
+                <li className="routine-order-item" key={blockIndex}>
+                  <span className="routine-order-number" aria-hidden="true">
+                    {position + 1}
+                  </span>
+                  <span className="routine-order-label">
+                    <strong>{label}</strong>
+                    <small>
+                      {block?.type === 'superset' ? 'Superset block' : 'Single exercise'}
+                    </small>
+                  </span>
+                  <span className="routine-order-controls">
+                    <Button
+                      variant="ghost"
+                      aria-label={`Move ${label} up`}
+                      disabled={position === 0}
+                      onClick={() => moveBlock(position, -1)}
+                    >
+                      Up
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      aria-label={`Move ${label} down`}
+                      disabled={position === blockOrder.length - 1}
+                      onClick={() => moveBlock(position, 1)}
+                    >
+                      Down
+                    </Button>
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+          {orderFeedback ? (
+            <p className="action-feedback action-feedback-success" aria-hidden="true">
+              <span className="state-symbol">✓</span>
+              {orderFeedback}
+            </p>
+          ) : null}
+        </section>
+        <div className="stack exercise-jump-heading">
+          <h3>Jump to exercise</h3>
+          <p className="muted">
+            This changes the current exercise without changing the saved order.
           </p>
         </div>
         <div className="exercise-choice-list">
@@ -148,6 +235,7 @@ function ExercisePickerDialog({
                   className="exercise-choice-button"
                   type="button"
                   aria-current={active ? 'true' : undefined}
+                  data-dialog-autofocus={active ? '' : undefined}
                   disabled={complete || skipped}
                   onClick={() => onSelect(key)}
                 >
@@ -213,6 +301,7 @@ function SetLogger({
   const [rpe, setRpe] = useState('');
   const [touched, setTouched] = useState(false);
   const [inputError, setInputError] = useState('');
+  const logAction = useRef<HTMLDivElement>(null);
   const previous = previousExerciseSession(
     store.data.sessionLogs,
     task.entry.exerciseId,
@@ -240,6 +329,7 @@ function SetLogger({
       rpe: rpe === '' ? null : Number(rpe),
     });
     if (!result.ok) setInputError(result.detail);
+    else resetPagePosition();
   };
 
   return (
@@ -322,16 +412,8 @@ function SetLogger({
           </p>
         ) : null}
       </div>
-      {inputError ? (
-        <p role="alert" className="action-feedback action-feedback-failure">
-          <span className="state-symbol" aria-hidden="true">
-            !
-          </span>
-          Set not saved. {inputError}
-        </p>
-      ) : null}
-      <Button wide onClick={confirm}>
-        Log set
+      <Button className="logger-skip" variant="ghost" wide onClick={onSkipExercise}>
+        Skip {exerciseName} for this workout
       </Button>
       <div className={`actual-fields${prefill && !touched ? ' prefilled' : ''}`}>
         <FormField label={`Weight (${unit})`} htmlFor="actual-weight">
@@ -342,6 +424,7 @@ function SetLogger({
             min="0"
             step="any"
             value={weight}
+            onFocus={() => keepControlReachable(logAction.current)}
             onChange={(event) => {
               setWeight(event.target.value);
               setTouched(true);
@@ -356,6 +439,7 @@ function SetLogger({
             min="0"
             step="1"
             value={reps}
+            onFocus={() => keepControlReachable(logAction.current)}
             onChange={(event) => {
               setReps(event.target.value);
               setTouched(true);
@@ -371,6 +455,7 @@ function SetLogger({
             max="10"
             step="0.5"
             value={rpe}
+            onFocus={() => keepControlReachable(logAction.current)}
             onChange={(event) => {
               setRpe(event.target.value);
               setTouched(true);
@@ -387,6 +472,7 @@ function SetLogger({
           className="select"
           style={{ width: 'auto' }}
           value={unit}
+          onFocus={() => keepControlReachable(logAction.current)}
           onChange={(event) => {
             const nextUnit = event.target.value;
             if (nextUnit === 'kg' || nextUnit === 'lb') setUnit(nextUnit);
@@ -397,9 +483,19 @@ function SetLogger({
           <option value="lb">lb</option>
         </select>
       </div>
-      <Button variant="ghost" wide onClick={onSkipExercise}>
-        Skip {exerciseName} for this workout
-      </Button>
+      {inputError ? (
+        <p role="alert" className="action-feedback action-feedback-failure">
+          <span className="state-symbol" aria-hidden="true">
+            !
+          </span>
+          Set not saved. {inputError}
+        </p>
+      ) : null}
+      <div className="logger-primary-action" ref={logAction}>
+        <Button wide onClick={confirm}>
+          Log set
+        </Button>
+      </div>
     </section>
   );
 }
@@ -533,10 +629,17 @@ export function ActiveSessionPage({ store }: { store: AppStore }) {
         </div>
       </main>
     );
-  const plan = plannedSets(session);
   const exerciseName = (exerciseId: string) =>
     program.exercises.find((exercise) => exercise.exerciseId === exerciseId)?.name ?? exerciseId;
-  const movements = sessionMovements(session, exerciseName);
+  const savedOrder = store.data.workoutOrders.find(
+    (candidate) =>
+      candidate.programId === log.programId &&
+      candidate.programVersion === log.programVersion &&
+      candidate.sessionId === log.sessionId,
+  );
+  const blockOrder = savedOrder?.blockOrder ?? authoredBlockOrder(session);
+  const plan = orderedPlannedSets(session, blockOrder);
+  const movements = sessionMovements(session, exerciseName, blockOrder);
   const loggedKeys = new Set(log.setLogs.map(plannedSetKey));
   const skippedKeys = new Set(log.skippedExercises.map(plannedEntryKey));
   const remaining = plan.filter(
@@ -777,6 +880,8 @@ export function ActiveSessionPage({ store }: { store: AppStore }) {
       {choosingExercise ? (
         <ExercisePickerDialog
           movements={movements}
+          session={session}
+          blockOrder={blockOrder}
           log={log}
           selectedKey={current ? plannedEntryKey(current) : null}
           store={store}

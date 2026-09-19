@@ -1,4 +1,5 @@
 import { freshRoot } from '../../domain/persistence/validateRoot';
+import { migrateV1ToV2, type PersistedRootV1 } from '../../domain/migration/migrations';
 import versionOneRoot from '../../../test-fixtures/persisted-v1.json';
 import { createLocalStorageAdapter, STORAGE_KEY } from './localStorageAdapter';
 
@@ -37,14 +38,33 @@ describe('localStorage adapter', () => {
     storage.clear();
   });
 
-  it('persists the v1 to v2 migration before returning training data', () => {
+  it('persists the v1 to current migration before returning training data', () => {
     const storage = window.localStorage;
     storage.setItem(STORAGE_KEY, JSON.stringify(versionOneRoot));
     const result = createLocalStorageAdapter(storage).load();
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.data.schemaVersion).toBe(2);
+    expect(result.data.schemaVersion).toBe(3);
     expect(result.data.sessionLogs[0]?.skippedExercises).toEqual([]);
+    expect(result.data.workoutOrders).toEqual([]);
+    expect(JSON.parse(storage.getItem(STORAGE_KEY) ?? 'null')).toEqual(result.data);
+    storage.clear();
+  });
+
+  it('absorbs the previously deployed v2 data without changing its history', () => {
+    const storage = window.localStorage;
+    const versionTwoRoot = migrateV1ToV2(versionOneRoot as PersistedRootV1);
+    storage.setItem(STORAGE_KEY, JSON.stringify(versionTwoRoot));
+
+    const result = createLocalStorageAdapter(storage).load();
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data).toEqual({
+      ...versionTwoRoot,
+      schemaVersion: 3,
+      workoutOrders: [],
+    });
     expect(JSON.parse(storage.getItem(STORAGE_KEY) ?? 'null')).toEqual(result.data);
     storage.clear();
   });

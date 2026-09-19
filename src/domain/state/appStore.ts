@@ -33,6 +33,7 @@ export interface AppStore {
   logSet(input: LogSetInput): ActionResult;
   skipExercise(sessionLogId: string, position: ExercisePosition): ActionResult;
   restoreExercise(sessionLogId: string, position: ExercisePosition): ActionResult;
+  reorderWorkout(sessionLogId: string, blockOrder: number[], movedBlockIndex: number): ActionResult;
   updateSet(
     sessionLogId: string,
     setLogId: string,

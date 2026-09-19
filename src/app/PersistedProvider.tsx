@@ -275,6 +275,65 @@ export function PersistedProvider({
           `${name} is back in this workout.`,
         );
       },
+      reorderWorkout: (sessionLogId, blockOrder, movedBlockIndex) => {
+        const sessionLog = data.sessionLogs.find((log) => log.sessionLogId === sessionLogId);
+        if (!sessionLog || sessionLog.completedAt !== null)
+          return reject('Routine reorder', 'The active session could not be found.');
+        const program = data.programs.find(
+          ({ program: candidate }) =>
+            candidate.programId === sessionLog.programId &&
+            candidate.version === sessionLog.programVersion,
+        )?.program;
+        const session = program?.sessions.find(
+          (candidate) => candidate.sessionId === sessionLog.sessionId,
+        );
+        const expected = session?.blocks.map((_, blockIndex) => blockIndex) ?? [];
+        const sorted = [...blockOrder].sort((left, right) => left - right);
+        if (
+          !session ||
+          sorted.length !== expected.length ||
+          sorted.some((blockIndex, index) => blockIndex !== expected[index])
+        )
+          return reject(
+            'Routine reorder',
+            'The new order must include every workout block exactly once.',
+          );
+        const movedBlock = session.blocks[movedBlockIndex];
+        const movedNames =
+          movedBlock?.type === 'single'
+            ? [movedBlock.entry.exerciseId]
+            : (movedBlock?.entries.map((entry) => entry.exerciseId) ?? []);
+        const label = movedNames
+          .map(
+            (exerciseId) =>
+              program?.exercises.find((exercise) => exercise.exerciseId === exerciseId)?.name ??
+              exerciseId,
+          )
+          .join(' + ');
+        const workoutOrder = {
+          programId: sessionLog.programId,
+          programVersion: sessionLog.programVersion,
+          sessionId: sessionLog.sessionId,
+          blockOrder,
+        };
+        const orderKey = (candidate: typeof workoutOrder) =>
+          `${candidate.programId}@${candidate.programVersion}/${candidate.sessionId}`;
+        const exists = data.workoutOrders.some(
+          (candidate) => orderKey(candidate) === orderKey(workoutOrder),
+        );
+        return commit(
+          {
+            ...data,
+            workoutOrders: exists
+              ? data.workoutOrders.map((candidate) =>
+                  orderKey(candidate) === orderKey(workoutOrder) ? workoutOrder : candidate,
+                )
+              : [...data.workoutOrders, workoutOrder],
+          },
+          `${session.name} routine order was not saved.`,
+          `${session.name} order saved · ${label} is now ${blockOrder.indexOf(movedBlockIndex) + 1} of ${blockOrder.length}.`,
+        );
+      },
       updateSet: (sessionLogId, setLogId, weight, reps, rpe) => {
         if (!isValidActual(weight, reps, rpe)) {
           return reject(

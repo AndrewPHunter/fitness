@@ -86,12 +86,23 @@ export function mergePersistedRoots(current: PersistedRoot, incoming: PersistedR
     }
   }
   if (errors.length > 0) return { ok: false, errors };
+  const workoutOrderMap = new Map(
+    current.workoutOrders.map((order) => [
+      `${order.programId}@${order.programVersion}/${order.sessionId}`,
+      order,
+    ]),
+  );
+  incoming.workoutOrders.forEach((order) => {
+    const key = `${order.programId}@${order.programVersion}/${order.sessionId}`;
+    if (!workoutOrderMap.has(key)) workoutOrderMap.set(key, order);
+  });
   return {
     ok: true,
     data: {
       ...current,
       programs: [...programMap.values()],
       sessionLogs: [...sessionMap.values()],
+      workoutOrders: [...workoutOrderMap.values()],
     },
   };
 }

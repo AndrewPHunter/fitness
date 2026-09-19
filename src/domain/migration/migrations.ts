@@ -10,6 +10,10 @@ export interface PersistedRootV1 {
   activeProgram: PersistedRoot['activeProgram'];
 }
 
+export type PersistedRootV2 = Omit<PersistedRoot, 'schemaVersion' | 'workoutOrders'> & {
+  schemaVersion: 2;
+};
+
 export interface PersistedRootV0 {
   schemaVersion: 0;
   programs: PersistedRoot['programs'];
@@ -27,7 +31,7 @@ export function migrateV0ToV1(root: PersistedRootV0): PersistedRootV1 {
   };
 }
 
-export function migrateV1ToV2(root: PersistedRootV1): PersistedRoot {
+export function migrateV1ToV2(root: PersistedRootV1): PersistedRootV2 {
   return {
     ...root,
     schemaVersion: 2,
@@ -35,5 +39,13 @@ export function migrateV1ToV2(root: PersistedRootV1): PersistedRoot {
       ...sessionLog,
       skippedExercises: [],
     })),
+  };
+}
+
+export function migrateV2ToV3(root: PersistedRootV2): PersistedRoot {
+  return {
+    ...root,
+    schemaVersion: 3,
+    workoutOrders: [],
   };
 }

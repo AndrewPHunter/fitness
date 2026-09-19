@@ -72,6 +72,23 @@ describe('JSON export', () => {
     expect(parsed.document.data).toEqual(root);
     expect(parsed.document.data.sessionLogs[0]?.setLogs).toEqual([]);
   });
+
+  it('round-trips saved workout order preferences', () => {
+    const program = validProgram(minimalJson);
+    const root = rootWith(program);
+    root.workoutOrders = [
+      {
+        programId: program.programId,
+        programVersion: program.version,
+        sessionId: 'full-body',
+        blockOrder: [1, 0],
+      },
+    ];
+
+    const parsed = fromExportJson(toExportJson(root, '2026-09-18T10:00:00-07:00'));
+    expect(parsed.ok).toBe(true);
+    if (parsed.ok) expect(parsed.document.data.workoutOrders).toEqual(root.workoutOrders);
+  });
 });
 
 describe('CSV export', () => {

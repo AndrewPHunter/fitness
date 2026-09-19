@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { DataPage } from '../features/data/DataPage';
 import { AuthorPage } from '../features/authoring/AuthorPage';
@@ -21,13 +21,16 @@ import { usePersistedStore } from './PersistedProvider';
 
 const pwaAdapter = createBrowserPwaAdapter();
 
-function ActionFeedback({
+export function ActionFeedback({
   store,
 }: {
   store: NonNullable<ReturnType<typeof usePersistedStore>['store']>;
 }) {
   const location = useLocation();
   const previousLocation = useRef(location.key);
+  const dismissTimer = useRef<number | null>(null);
+  const [exiting, setExiting] = useState(false);
+  const feedback = store.failure ?? store.notice;
 
   useLayoutEffect(() => {
     window.scrollTo({ left: 0, top: 0 });
@@ -41,19 +44,52 @@ function ActionFeedback({
     previousLocation.current = location.key;
   }, [location.key, location.state, store]);
 
+  useEffect(() => {
+    setExiting(false);
+    if (!feedback) return;
+    const fadeTimer = window.setTimeout(() => setExiting(true), 5200);
+    const clearTimer = window.setTimeout(store.clearMessages, 5500);
+    return () => {
+      window.clearTimeout(fadeTimer);
+      window.clearTimeout(clearTimer);
+      if (dismissTimer.current !== null) window.clearTimeout(dismissTimer.current);
+    };
+  }, [feedback, store.clearMessages]);
+
+  const dismiss = () => {
+    setExiting(true);
+    if (dismissTimer.current !== null) window.clearTimeout(dismissTimer.current);
+    dismissTimer.current = window.setTimeout(store.clearMessages, 180);
+  };
+
   return (
     <>
       <div className="visually-hidden" aria-live="polite">
         {store.notice}
       </div>
       {store.notice ? (
-        <aside className="global-feedback global-feedback-success" aria-hidden="true">
-          <span className="state-symbol">✓</span>
-          <p>{store.notice}</p>
+        <aside
+          className={`global-feedback global-feedback-success${exiting ? ' global-feedback-exiting' : ''}`}
+        >
+          <span className="state-symbol" aria-hidden="true">
+            ✓
+          </span>
+          <p aria-hidden="true">{store.notice}</p>
+          <Button
+            className="feedback-dismiss"
+            variant="ghost"
+            aria-label="Dismiss notification"
+            onClick={dismiss}
+          >
+            Dismiss
+          </Button>
         </aside>
       ) : null}
       {store.failure ? (
-        <aside className="global-feedback global-feedback-failure" role="alert">
+        <aside
+          className={`global-feedback global-feedback-failure${exiting ? ' global-feedback-exiting' : ''}`}
+          role="alert"
+        >
           <span className="state-symbol" aria-hidden="true">
             !
           </span>
@@ -64,7 +100,7 @@ function ActionFeedback({
               <a className="button button-secondary" href="#/data">
                 Open Backup
               </a>
-              <Button variant="ghost" onClick={store.clearMessages}>
+              <Button variant="ghost" onClick={dismiss}>
                 Dismiss
               </Button>
             </div>
