@@ -25,12 +25,25 @@ test('a workout can change order, skip exercises, complete, and remain intelligi
   await expect(chooser).toBeVisible();
   const moveSupersetUp = chooser.getByRole('button', { name: 'Move Leg Curl + Face Pull up' });
   await moveSupersetUp.click();
-  await moveSupersetUp.click();
-  await expect(chooser.getByText('Leg Curl + Face Pull is now 1 of 3. Order saved.')).toBeVisible();
-  await chooser.getByRole('button', { name: 'Close' }).click();
+  await expect(chooser.getByText('Leg Curl + Face Pull is now 2 of 3. Order saved.')).toBeVisible();
+  await chooser.getByRole('button', { name: /Leg Curl.*Choose/u }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Leg Curl' })).toBeVisible();
+  await expect(page.getByLabel('Workout block position 2 of 3')).toHaveText('2');
+  await page.getByRole('button', { name: 'Switch' }).click();
+  const reopenedChooser = page.getByRole('dialog', { name: 'Choose an exercise' });
+  const moveSupersetUpAgain = reopenedChooser.getByRole('button', {
+    name: 'Move Leg Curl + Face Pull up',
+  });
+  await moveSupersetUpAgain.click();
+  await expect(
+    reopenedChooser.getByText('Leg Curl + Face Pull is now 1 of 3. Order saved.'),
+  ).toBeVisible();
+  await reopenedChooser.getByRole('button', { name: 'Close' }).click();
+  await expect(page.getByRole('heading', { level: 2, name: 'Leg Curl' })).toBeVisible();
+  await expect(page.getByLabel('Workout block position 1 of 3')).toHaveText('1');
   await page.reload();
   await expect(page.getByRole('heading', { level: 2, name: 'Leg Curl' })).toBeVisible();
+  await expect(page.getByLabel('Workout block position 1 of 3')).toHaveText('1');
   expect(
     await page.evaluate(() => {
       const raw = globalThis.localStorage.getItem('fitness.v1.root');

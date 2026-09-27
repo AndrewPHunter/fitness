@@ -278,6 +278,8 @@ function ExercisePickerDialog({
 
 function SetLogger({
   task,
+  routinePosition,
+  routineCount,
   exerciseName,
   store,
   sessionLogId,
@@ -285,6 +287,8 @@ function SetLogger({
   onSkipExercise,
 }: {
   task: PlannedSet;
+  routinePosition: number;
+  routineCount: number;
   exerciseName: string;
   store: AppStore;
   sessionLogId: string;
@@ -338,12 +342,16 @@ function SetLogger({
     <section className="current-set">
       <div className="spread set-heading-row">
         <div className="set-marker">
-          <span className="set-number">{task.setIndex + 1}</span>
+          <span
+            className="routine-position"
+            aria-label={`Workout block position ${routinePosition} of ${routineCount}`}
+          >
+            {routinePosition}
+          </span>
           <div>
             <p className="eyebrow">
-              {task.isSuperset
-                ? `Superset · movement ${task.entryIndex + 1}`
-                : `Block ${task.blockIndex + 1}`}
+              Block {routinePosition} of {routineCount}
+              {task.isSuperset ? ` · Superset movement ${task.entryIndex + 1}` : ''}
             </p>
             <h2>{exerciseName}</h2>
             {isPerSetEntry(task.entry) && task.entry.notes ? (
@@ -688,16 +696,24 @@ export function ActiveSessionPage({ store }: { store: AppStore }) {
             {log.setLogs.length === 0 ? 'Discard' : 'Leave'}
           </Button>
         </div>
-        <div
-          className="progress-track"
-          role="progressbar"
-          aria-label="Session progress"
-          aria-valuetext={`${log.setLogs.length} sets logged and ${log.skippedExercises.length} exercises skipped`}
-          aria-valuenow={resolvedCount}
-          aria-valuemin={0}
-          aria-valuemax={plan.length}
-        >
-          <div className="progress-fill" style={{ transform: `scaleX(${progress / 100})` }} />
+        <div className="day-progress">
+          <div className="day-progress-summary">
+            <span>Day progress</span>
+            <strong>
+              {resolvedCount} of {plan.length} accounted for
+            </strong>
+          </div>
+          <div
+            className="progress-track"
+            role="progressbar"
+            aria-label="Program day progress"
+            aria-valuetext={`${resolvedCount} of ${plan.length} prescribed sets accounted for; ${log.setLogs.length} sets logged and ${log.skippedExercises.length} exercises skipped`}
+            aria-valuenow={resolvedCount}
+            aria-valuemin={0}
+            aria-valuemax={plan.length}
+          >
+            <div className="progress-fill" style={{ transform: `scaleX(${progress / 100})` }} />
+          </div>
         </div>
       </header>
       <div className="active-layout">
@@ -706,6 +722,8 @@ export function ActiveSessionPage({ store }: { store: AppStore }) {
             <SetLogger
               key={plannedSetKey(current)}
               task={current}
+              routinePosition={blockOrder.indexOf(current.blockIndex) + 1}
+              routineCount={blockOrder.length}
               exerciseName={exerciseName(current.entry.exerciseId)}
               store={store}
               sessionLogId={log.sessionLogId}

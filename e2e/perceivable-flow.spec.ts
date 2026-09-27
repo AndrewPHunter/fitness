@@ -88,6 +88,9 @@ test('the empty-storage core loop keeps every outcome and next step perceivable'
   await expectPerceivable(
     page.locator('.global-feedback-success').filter({ hasText: 'Full Body started.' }),
   );
+  const dayProgress = page.getByRole('progressbar', { name: 'Program day progress' });
+  await expect(dayProgress).toHaveAttribute('aria-valuenow', '0');
+  await expect(page.getByText('0 of 6 accounted for')).toBeVisible();
 
   await page.locator('#actual-weight').fill('0');
   await page.getByRole('button', { name: 'Log set' }).click();
@@ -103,6 +106,8 @@ test('the empty-storage core loop keeps every outcome and next step perceivable'
       .locator('.global-feedback-success')
       .filter({ hasText: 'Set 1 logged · 100 kg × 5 · RPE 8' }),
   );
+  await expect(dayProgress).toHaveAttribute('aria-valuenow', '1');
+  await expect(page.getByText('1 of 6 accounted for')).toBeVisible();
   await expect(page.locator('.prescribed-band')).toContainText('Set 2 of 3 · 5 reps');
 
   for (const set of [2, 3, 1, 2, 3]) {
