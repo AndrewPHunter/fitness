@@ -562,9 +562,30 @@ p {
   display: grid;
   gap: var(--space-lg);
 }
+.day-progress {
+  display: grid;
+  gap: var(--space-2xs);
+}
+.day-progress-summary {
+  align-items: baseline;
+  color: var(--muted);
+  display: flex;
+  font-size: 0.78rem;
+  gap: var(--space-sm);
+  justify-content: space-between;
+  letter-spacing: 0.03em;
+}
+.day-progress-summary span {
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.day-progress-summary strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
 .progress-track {
   background: var(--bg);
-  height: 0.35rem;
+  height: 0.5rem;
   overflow: hidden;
 }
 .progress-fill {
@@ -602,7 +623,7 @@ p {
   flex: 0 0 auto;
   margin-inline-start: auto;
 }
-.set-number {
+.routine-position {
   align-items: center;
   background: var(--accent);
   border-radius: 50%;

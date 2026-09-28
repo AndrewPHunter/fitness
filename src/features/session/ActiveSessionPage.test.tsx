@@ -105,12 +105,19 @@ function renderApp(root: PersistedRoot) {
 it('drives a superset in round-robin component order', async () => {
   const user = userEvent.setup();
   renderApp(activeRoot());
+  const progress = screen.getByRole('progressbar', { name: 'Program day progress' });
+  expect(progress).toHaveAttribute('aria-valuenow', '0');
+  expect(progress).toHaveAttribute('aria-valuemax', '4');
+  expect(screen.getByText('0 of 4 accounted for')).toBeVisible();
+  expect(screen.getByLabelText('Workout block position 1 of 1')).toHaveTextContent('1');
   expect(screen.getByRole('heading', { level: 2, name: 'Movement A' })).toBeVisible();
   await user.click(screen.getByRole('button', { name: 'Log set' }));
+  expect(progress).toHaveAttribute('aria-valuenow', '1');
+  expect(screen.getByText('1 of 4 accounted for')).toBeVisible();
   expect(screen.getByRole('heading', { level: 2, name: 'Movement B' })).toBeVisible();
   await user.click(screen.getByRole('button', { name: 'Log set' }));
   expect(screen.getByRole('heading', { level: 2, name: 'Movement A' })).toBeVisible();
-  expect(screen.getByText('Superset · movement 1')).toBeVisible();
+  expect(screen.getByText('Block 1 of 1 · Superset movement 1')).toBeVisible();
 });
 
 it('lets the user switch exercises without losing the authored default order', async () => {
@@ -137,6 +144,8 @@ it('saves a reordered routine and uses it as the default flow', async () => {
   await user.click(screen.getByRole('button', { name: 'Close' }));
 
   expect(screen.getByRole('heading', { level: 2, name: 'Bench Press' })).toBeVisible();
+  expect(screen.getByLabelText('Workout block position 1 of 3')).toHaveTextContent('1');
+  expect(screen.getByText('Block 1 of 3')).toBeVisible();
   const raw = adapter.raw();
   const saved: unknown = raw ? JSON.parse(raw) : null;
   expect(saved).toMatchObject({
