@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { entryPrescriptionSummary } from '../../domain/program/prescription';
 import { nextSession } from '../../domain/schedule/nextSession';
 import { orderedSessionBlocks } from '../../domain/session/plannedSets';
+import { entireSessionSkipped } from '../../domain/session/sessionOutcome';
 import type { AppStore } from '../../domain/state/appStore';
 import { Badge } from '../../ui/atoms/Badge';
 import { Button } from '../../ui/atoms/Button';
+import { ConfirmDialog } from '../../ui/organisms/ConfirmDialog';
 
 const dayNames = {
   mon: 'Monday',
@@ -16,8 +19,21 @@ const dayNames = {
   sun: 'Sunday',
 };
 
+function calendarDay(iso: string, timezone: string): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date(iso));
+  const value = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? '';
+  return `${value('year')}-${value('month')}-${value('day')}`;
+}
+
 export function TodayPage({ store }: { store: AppStore }) {
   const navigate = useNavigate();
+  const [confirmingSkip, setConfirmingSkip] = useState(false);
   const activeLog = store.activeSession();
   const active = store.data.activeProgram
     ? store.data.programs.find(
@@ -67,7 +83,19 @@ export function TodayPage({ store }: { store: AppStore }) {
       log.programVersion === active.version &&
       log.completedAt !== null,
   ).length;
-  const next = nextSession(active, completed, store.now(), store.timezone());
+  const now = store.now();
+  const timezone = store.timezone();
+  const next = nextSession(active, completed, now, timezone);
+  const weekdaySessionSkippedToday =
+    active.schedule.mode === 'weekdays' &&
+    store.data.sessionLogs.some(
+      (log) =>
+        log.programId === active.programId &&
+        log.programVersion === active.version &&
+        log.sessionId === next.session.sessionId &&
+        entireSessionSkipped(next.session, log) &&
+        calendarDay(log.completedAt ?? log.startedAt, timezone) === calendarDay(now, timezone),
+    );
   const activeLogProgram = activeLog
     ? store.data.programs.find(
         ({ program }) =>
@@ -83,6 +111,10 @@ export function TodayPage({ store }: { store: AppStore }) {
   const start = () => {
     const result = store.startSession(next.session.sessionId);
     if (result.ok) navigate('/session/active', { state: { preserveFeedback: true } });
+  };
+  const skip = () => {
+    const result = store.skipSession(next.session.sessionId);
+    if (result.ok) setConfirmingSkip(false);
   };
   return (
     <main className="page">
@@ -129,6 +161,19 @@ export function TodayPage({ store }: { store: AppStore }) {
               : ''}
           </Link>
         </section>
+      ) : weekdaySessionSkippedToday ? (
+        <section className="session-card">
+          <div>
+            <p className="eyebrow">Session skipped</p>
+            <h2>{next.session.name}</h2>
+            <p className="muted">
+              Recorded for today. Your weekday schedule continues on its next training day.
+            </p>
+          </div>
+          <Link className="button button-secondary" to="/history">
+            View in History
+          </Link>
+        </section>
       ) : (
         <section className="session-card">
           <div>
@@ -160,8 +205,20 @@ export function TodayPage({ store }: { store: AppStore }) {
           <Button wide onClick={start}>
             Start session
           </Button>
+          <Button variant="ghost" wide onClick={() => setConfirmingSkip(true)}>
+            Skip session
+          </Button>
         </section>
       )}
+      {confirmingSkip && !weekdaySessionSkippedToday ? (
+        <ConfirmDialog
+          title={`Skip ${next.session.name}?`}
+          description={`This records every exercise in ${next.session.name} as skipped and adds the session to History. Rotation programs move to the next session; weekday programs continue to follow their calendar. No sets will be logged.`}
+          confirmLabel="Skip this session"
+          onConfirm={skip}
+          onCancel={() => setConfirmingSkip(false)}
+        />
+      ) : null}
     </main>
   );
 }

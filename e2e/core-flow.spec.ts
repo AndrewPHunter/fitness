@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import path from 'node:path';
+import { expectPerceivable } from './helpers/expectPerceivable';
 
 const rotationFixture = path.resolve('fixtures/programs/02-every-other-day-rotation.json');
 const minimalFixture = path.resolve('fixtures/programs/01-minimal.json');
@@ -50,6 +51,59 @@ test('reference program uploads and a full session survives reload', async ({ pa
   expect(after).toBe(before);
   await page.goto('#/history');
   await expect(page.getByRole('heading', { name: 'Back Squat' })).toBeVisible();
+});
+
+test('the next session can be skipped from Today and advances the rotation', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await uploadAndActivate(page, rotationFixture);
+  await page.goto('#/');
+
+  const start = page.getByRole('button', { name: 'Start session' });
+  const skip = page.getByRole('button', { name: 'Skip session' });
+  await expectPerceivable(start);
+  await expectPerceivable(skip);
+  const startBox = await start.boundingBox();
+  const skipBox = await skip.boundingBox();
+  expect(skipBox?.y).toBeGreaterThan((startBox?.y ?? 0) + (startBox?.height ?? 0));
+
+  await skip.click();
+  const confirmation = page.getByRole('alertdialog', { name: 'Skip A — Squat / Bench?' });
+  await expect(confirmation.getByText('No sets will be logged.')).toBeVisible();
+  const confirm = confirmation.getByRole('button', { name: 'Skip this session' });
+  await expect(confirm).toBeFocused();
+  await confirm.click();
+
+  await expectPerceivable(
+    page
+      .locator('.global-feedback-success')
+      .filter({ hasText: 'A — Squat / Bench skipped · 4 exercises recorded as skipped.' }),
+  );
+  await expect(page.getByRole('heading', { name: 'B — Squat / Press' })).toBeVisible();
+  expect(
+    await page.evaluate(() => {
+      const raw = globalThis.localStorage.getItem('fitness.v1.root');
+      return raw ? JSON.parse(raw) : null;
+    }),
+  ).toMatchObject({
+    sessionLogs: [
+      {
+        sessionId: 'a-squat-bench',
+        completedAt: expect.any(String),
+        setLogs: [],
+        skippedExercises: [
+          { exerciseId: 'barbell-back-squat' },
+          { exerciseId: 'barbell-bench-press' },
+          { exerciseId: 'chin-up' },
+          { exerciseId: 'dip' },
+        ],
+      },
+    ],
+  });
+
+  await page.getByRole('link', { name: 'History', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'A — Squat / Bench' })).toBeVisible();
+  await expect(page.locator('.workout-status')).toHaveText('Skipped');
+  await expect(page.getByText('No sets logged · skipped for this workout')).toHaveCount(4);
 });
 
 test('both invalid fixtures report every error without writing storage', async ({ page }) => {
