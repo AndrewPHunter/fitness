@@ -30,6 +30,7 @@ export interface AppStore {
   addProgram(program: Program): ActionResult;
   activateProgram(programId: string, version: number): ActionResult;
   startSession(sessionId: string): ActionResult;
+  skipSession(sessionId: string): ActionResult;
   logSet(input: LogSetInput): ActionResult;
   skipExercise(sessionLogId: string, position: ExercisePosition): ActionResult;
   restoreExercise(sessionLogId: string, position: ExercisePosition): ActionResult;

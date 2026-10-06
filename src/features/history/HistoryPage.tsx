@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { allSetLogs, observedFrequency } from '../../domain/history/history';
 import type { Program, Session, SessionLog } from '../../domain/program/types';
 import { plannedEntryKey } from '../../domain/session/plannedSets';
+import { entireSessionSkipped, sessionEntryPositions } from '../../domain/session/sessionOutcome';
 import type { AppStore } from '../../domain/state/appStore';
 import { formatLoad } from '../../domain/units/load';
 import { Button } from '../../ui/atoms/Button';
@@ -26,15 +27,7 @@ function WorkoutRecord({
   session: Session;
   latest: boolean;
 }) {
-  const positions = session.blocks.flatMap((block, blockIndex) =>
-    block.type === 'single'
-      ? [{ blockIndex, entryIndex: 0, exerciseId: block.entry.exerciseId }]
-      : block.entries.map((entry, entryIndex) => ({
-          blockIndex,
-          entryIndex,
-          exerciseId: entry.exerciseId,
-        })),
-  );
+  const positions = sessionEntryPositions(session);
   const exerciseName = (exerciseId: string) =>
     program.exercises.find((exercise) => exercise.exerciseId === exerciseId)?.name ?? exerciseId;
   const representedKeys = new Set([
@@ -44,6 +37,7 @@ function WorkoutRecord({
   const represented = positions.filter((position) =>
     representedKeys.has(plannedEntryKey(position)),
   );
+  const sessionWasSkipped = entireSessionSkipped(session, sessionLog);
 
   return (
     <details className="workout-record" open={latest}>
@@ -56,7 +50,11 @@ function WorkoutRecord({
           </small>
         </span>
         <span className="workout-status">
-          {sessionLog.completedAt === null ? 'In progress' : 'Complete'}
+          {sessionLog.completedAt === null
+            ? 'In progress'
+            : sessionWasSkipped
+              ? 'Skipped'
+              : 'Complete'}
         </span>
       </summary>
       <div className="workout-record-body">

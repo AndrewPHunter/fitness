@@ -1,9 +1,10 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { mergePersistedRoots } from '../domain/export/merge';
 import type { AppStore, LogSetInput } from '../domain/state/appStore';
-import type { PersistedRoot, Program, Settings } from '../domain/program/types';
+import type { PersistedRoot, Program, SessionLog, Settings } from '../domain/program/types';
 import { isValidActual } from '../domain/session/actualSet';
 import { plannedEntryKey, plannedSetKey, plannedSets } from '../domain/session/plannedSets';
+import { sessionEntryPositions } from '../domain/session/sessionOutcome';
 import type { Clock } from '../platform/clock/Clock';
 import type { IdProvider } from '../platform/ids/IdProvider';
 import type { LoadResult, StorageAdapter, WriteResult } from '../platform/storage/StorageAdapter';
@@ -125,6 +126,44 @@ export function PersistedProvider({
           { ...data, sessionLogs: [...data.sessionLogs, sessionLog] },
           `${sessionName} was not started.`,
           `${sessionName} started.`,
+        );
+      },
+      skipSession: (sessionId: string) => {
+        if (!data.activeProgram)
+          return reject('Session skip', 'Activate a program before skipping a session.');
+        if (data.sessionLogs.some((log) => log.completedAt === null))
+          return reject(
+            'Session skip',
+            'Finish or discard the session already in progress before skipping another.',
+          );
+        const program = data.programs.find(
+          ({ program: candidate }) =>
+            candidate.programId === data.activeProgram?.programId &&
+            candidate.version === data.activeProgram.version,
+        )?.program;
+        const session = program?.sessions.find((candidate) => candidate.sessionId === sessionId);
+        if (!program || !session)
+          return reject('Session skip', 'The session prescription could not be found.');
+
+        const skippedAt = clock.now();
+        const skippedExercises = sessionEntryPositions(session).map((position) => ({
+          ...position,
+          skippedAt,
+        }));
+        const sessionLog: SessionLog = {
+          sessionLogId: ids.next(),
+          programId: program.programId,
+          programVersion: program.version,
+          sessionId,
+          startedAt: skippedAt,
+          completedAt: skippedAt,
+          setLogs: [],
+          skippedExercises,
+        };
+        return commit(
+          { ...data, sessionLogs: [...data.sessionLogs, sessionLog] },
+          `${session.name} was not skipped.`,
+          `${session.name} skipped · ${skippedExercises.length} exercise${skippedExercises.length === 1 ? '' : 's'} recorded as skipped.`,
         );
       },
       logSet: (input: LogSetInput) => {

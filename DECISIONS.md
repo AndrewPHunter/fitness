@@ -28,6 +28,11 @@
   time that workout day starts without mutating the imported program. Supersets move as one block
   and retain round-robin logging; jumping to an individual exercise remains temporary and does not
   rewrite the saved order.
+- **Skipping a whole session reuses exercise-skip history:** A whole-session skip is stored as one
+  completed session with zero sets and every prescribed exercise entry marked skipped. This keeps
+  existing backups compatible and lets rotation programs advance without fabricating logged work.
+  History labels that exact outcome **Skipped**. Fixed-weekday programs remain calendar-anchored and
+  show the session as skipped for the rest of that local day rather than offering it repeatedly.
 - **Observed frequency event:** An exercise counts once on a calendar date if at least one set was
   logged for it that day. Multiple sets in the same workout do not inflate training frequency.
 - **Import merge ordering:** Successful merges preserve current program/log order and append
